@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+pyyaml
+pillow
+asyncpg
+itsdangerous
+python-multipart
+google-re2
+PyJWT

@@ -1,0 +1,15 @@
+server:
+  port: 8000
+  debug: false
+psql:
+  host: "..."
+  user: "..."
+  database: "..."
+  port: 5432
+  password: "..."
+  pool-min-size: 10
+  pool-max-size: 20
+cloudflare-turnstile:
+  secret-key: "your cloudflare turnstile secret key"
+jwt:
+  secret: "your jwt secret" # python -c "import secrets; print(secrets.token_hex(64))"
