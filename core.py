@@ -13,6 +13,9 @@ from authlib.integrations.starlette_client import OAuth
 
 from helpers.error_detail_codes import ErrorDetailCode
 
+from pjsk_api import clients, PJSKClient, set_client
+from pjsk_api.app_ver_hash import get_en, get_jp
+
 
 class SbugaFastAPI(FastAPI):
     def __init__(self, config: ConfigType, *args, **kwargs):
@@ -20,11 +23,10 @@ class SbugaFastAPI(FastAPI):
         self.config: ConfigType = config
         self.debug: bool = config["server"].get("debug", False)
 
-        self.executor: ThreadPoolExecutor | None = None
-        self.auth: str | None = None
-        self.auth_header: str | None = None
-        self.token_secret_key: str | None = None
+        self.executor: ThreadPoolExecutor = ThreadPoolExecutor(max_workers=16)
         self.db: asyncpg.Pool | None = None
+
+        self.pjsk_clients: dict[str, PJSKClient] = clients
 
         self.oauth: OAuth | None = None
 
@@ -32,12 +34,6 @@ class SbugaFastAPI(FastAPI):
 
     async def init(self) -> None:
         """Initialize all resources after worker process starts."""
-        self.executor = ThreadPoolExecutor(max_workers=16)
-
-        self.auth = self.config["server"]["auth"]
-        self.auth_header = self.config["server"]["auth-header"]
-        self.token_secret_key = self.config["server"]["token-secret-key"]
-
         psql_config = self.config["psql"]
         self.db = await asyncpg.create_pool(
             host=psql_config["host"],
@@ -50,8 +46,26 @@ class SbugaFastAPI(FastAPI):
             ssl="disable",  # XXX: todo, lazy for now
         )
 
+    async def set_en_pjsk_client(self):
+        data = await get_en()
+        await set_client(
+            "en",
+            PJSKClient(
+                "en", app_version=data["app_version"], app_hash=data["app_hash"]
+            ),
+        )
+
+    async def set_jp_pjsk_client(self):
+        data = await get_jp()
+        await set_client(
+            "jp",
+            PJSKClient(
+                "jp", app_version=data["app_version"], app_hash=data["app_hash"]
+            ),
+        )
+
     @asynccontextmanager
-    async def acquire_db(self) -> AsyncGenerator[DBConnWrapper]:
+    async def acquire_db(self) -> AsyncGenerator[DBConnWrapper, None]:
         async with self.db.acquire() as conn:
             yield DBConnWrapper(conn)
 

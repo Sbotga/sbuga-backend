@@ -1,6 +1,7 @@
 pjsk_api/routes/
 pjsk_api/data/
 pjsk_api/constants.py
+pjsk_api/app_ver_hash.py
 config.yml
 
 # Byte-compiled / optimized / DLL files
