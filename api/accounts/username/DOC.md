@@ -2,6 +2,12 @@
 
 Changes the username for the authenticated account.
 
+### Authorization
+
+| Header | Value |
+|---|---|
+| `Authorization` | Access token obtained from signin or signup. |
+
 ### Request Body
 
 | Field | Type | Description |

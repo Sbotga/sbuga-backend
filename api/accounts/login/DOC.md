@@ -17,7 +17,9 @@ Signs into an existing account.
   "username": "example",
   "display_name": "Example",
   "created_at": 1700000000000,
-  "updated_at": 1700000000000
+  "updated_at": 1700000000000,
+  "access_token": "access authorization token",
+  "refresh_token": "refresh authorization token"
 }
 ```
 

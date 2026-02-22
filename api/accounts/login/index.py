@@ -6,6 +6,8 @@ from helpers.utils import get_ip
 from helpers.turnstile import verify_turnstile
 import database as db
 
+from helpers.session import create_session
+
 from helpers.error_detail_codes import ErrorDetailCode
 
 router = APIRouter()
@@ -39,10 +41,15 @@ async def main(request: Request, body: LoginBody):
             detail=ErrorDetailCode.InvalidAccountDetails.value,
         )
 
+    access_token = create_session(account.id, type="access")
+    refresh_token = create_session(account.id, type="refresh")
+
     return {
         "id": account.id,
         "username": account.username,
         "display_name": account.display_name,
         "created_at": int(account.created_at.timestamp() * 1000),
         "updated_at": int(account.updated_at.timestamp() * 1000),
+        "access_token": access_token,
+        "refresh_token": refresh_token,
     }

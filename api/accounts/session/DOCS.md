@@ -2,6 +2,12 @@
 
 Exchanges a refresh token for a new access token.
 
+### Authorization
+
+| Header | Value |
+|---|---|
+| `Authorization` | **Refresh** token obtained from signin or signup. |
+
 ### Headers
 
 | Header | Value |
