@@ -1,4 +1,4 @@
-pjsk_api/routes/
+pjsk_api/requests/
 pjsk_api/data/
 pjsk_api/constants.py
 pjsk_api/app_ver_hash.py

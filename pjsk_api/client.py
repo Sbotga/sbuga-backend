@@ -2,7 +2,7 @@ import aiohttp
 from msgpack import unpackb, packb
 from pjsk_api.crypto import encrypt, decrypt
 from pjsk_api.constants import keys
-from typing import Any, Optional, Type
+from typing import Any, Optional, Type, TypeVar, Generic
 from pydantic import BaseModel
 
 
@@ -11,15 +11,17 @@ APP_PLATFORM_NAMES = {
     "android": "Android",
 }
 
+T = TypeVar("T", bound=BaseModel)
 
-class RequestData(BaseModel):
+
+class RequestData(BaseModel, Generic[T]):
     base_url: str
     path: str
     method: str = "GET"
     data: Optional[dict] = None
     headers: Optional[dict] = None
     params: Optional[dict] = None
-    response_model: Optional[Type[BaseModel]] = None
+    response_model: Optional[Type[T]] = None
 
     model_config = {"arbitrary_types_allowed": True}
 
@@ -39,6 +41,7 @@ class PJSKClient:
         self.app_platform = app_platform
         self.unity_version = unity_version
         self._session: aiohttp.ClientSession = None
+        self.is_authenticated: bool = False
 
     @property
     def keyset(self):
@@ -82,7 +85,7 @@ class PJSKClient:
         except Exception:
             return data
 
-    async def request(self, req: RequestData) -> Any:
+    async def request(self, req: RequestData[T]) -> Optional[T]:
         url = f"{req.base_url.rstrip('/')}/{req.path.lstrip('/')}"
         body = self._pack(req.data) if req.data is not None else None
 
@@ -101,6 +104,13 @@ class PJSKClient:
                     status=response.status,
                     message=raw.decode(errors="replace"),
                 )
+
+            if "Set-Cookie" in response.headers:
+                self._session.cookie_jar.update_cookies(response.cookies, response.url)
+
+            session_token = response.headers.get("X-Session-Token")
+            if session_token:
+                self._session.headers.update({"X-Session-Token": session_token})
 
             result = self._unpack(raw)
 
