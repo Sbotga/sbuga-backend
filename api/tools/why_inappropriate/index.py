@@ -18,7 +18,7 @@ class CheckWordsBody(BaseModel):
 MAX_TEXT_LENGTH = 1024
 
 
-@router.get("")
+@router.post("")
 async def main(request: Request, body: CheckWordsBody):
     app: SbugaFastAPI = request.app
     client = app.pjsk_clients[body.region]

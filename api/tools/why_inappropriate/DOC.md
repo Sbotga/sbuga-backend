@@ -1,4 +1,4 @@
-## GET `/api/tools/why_inappropriate`
+## POST `/api/tools/why_inappropriate`
 
 Returns the indexes of inappropriate text based on PJSK's block and allow word lists for a given region.
 
