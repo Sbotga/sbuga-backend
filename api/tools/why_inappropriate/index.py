@@ -2,6 +2,8 @@ from fastapi import APIRouter, Request, HTTPException, status
 from pydantic import BaseModel
 from core import SbugaFastAPI
 
+import re2
+
 from typing import Literal
 
 router = APIRouter()
@@ -25,19 +27,18 @@ async def main(request: Request, body: CheckWordsBody):
     block_words: list = await client.get_master("ngWords")
 
     text = body.text
-    text_lower = text.lower()
 
-    effective_blocks = [
-        w for w in block_words if w.lower() not in [a.lower() for a in allow_words]
-    ]
+    allowed_patterns = [re2.escape(a["word"]) for a in allow_words]
+    if allowed_patterns:
+        scrubbed = re2.sub(f"(?i)({'|'.join(allowed_patterns)})", "", text)
+    else:
+        scrubbed = text
 
     indexes = []
-    for word in effective_blocks:
-        word_lower = word.lower()
-        start = 0
-        while (pos := text_lower.find(word_lower, start)) != -1:
-            indexes.append({"start": pos, "end": pos + len(word)})
-            start = pos + 1
+    for block in block_words:
+        word = re2.escape(block["word"])
+        for match in re2.finditer(f"(?i){word}", scrubbed):
+            indexes.append({"start": match.start(), "end": match.end()})
 
     indexes.sort(key=lambda x: x["start"])
     merged = []
