@@ -11,3 +11,4 @@ msgpack
 pycryptodome
 packaging
 aiofiles
+aiohttp
