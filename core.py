@@ -48,7 +48,7 @@ class SbugaFastAPI(FastAPI):
         )
 
         asyncio.create_task(self._set_en_pjsk_client())
-        asyncio.create_task(self.set_jp_pjsk_client())
+        asyncio.create_task(self._set_jp_pjsk_client())
 
     async def _set_en_pjsk_client(self):
         data = await get_en()
