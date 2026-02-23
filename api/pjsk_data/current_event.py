@@ -27,7 +27,7 @@ def get_current_event(events: list) -> dict | None:
     return None
 
 
-@router.get("/current_event")
+@router.get("")
 async def current_event(request: Request, region: Literal["en", "jp"]):
     app: SbugaFastAPI = request.app
 
