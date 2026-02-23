@@ -37,12 +37,15 @@ async def main():
         """
         CREATE TABLE IF NOT EXISTS account (
             id BIGINT NOT NULL,
-            display_name STRING NOT NULL,
+            display_name TEXT NOT NULL,
             username VARCHAR(255) NOT NULL UNIQUE,
             salted_password VARCHAR(255) NOT NULL,
             created_at TIMESTAMP NOT NULL DEFAULT NOW(),
             updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
             banned BOOLEAN NOT NULL DEFAULT false,
+            description TEXT NOT NULL DEFAULT 'This user hasn''t set a description!',
+            profile_hash TEXT DEFAULT NULL,
+            banner_hash TEXT DEFAULT NULL,
             PRIMARY KEY (id)
         );
         """
