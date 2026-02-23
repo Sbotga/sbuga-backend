@@ -1,6 +1,7 @@
 import asyncio
 from fastapi import FastAPI, Request
 from fastapi import status, HTTPException
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from helpers.config_loader import ConfigType
 from concurrent.futures import ThreadPoolExecutor
@@ -32,6 +33,9 @@ class SbugaFastAPI(FastAPI):
         self.pjsk_clients: dict[str, PJSKClient] = clients
 
         self.exception_handlers.setdefault(HTTPException, self.http_exception_handler)
+        self.exception_handlers.setdefault(
+            RequestValidationError, self.validation_exception_handler
+        )
 
     async def init(self) -> None:
         """Initialize all resources after worker process starts."""
@@ -86,14 +90,9 @@ class SbugaFastAPI(FastAPI):
         )
 
     async def http_exception_handler(self, request: Request, exc: HTTPException):
-        if exc.status_code < 500 and exc.status_code != 422:
+        if exc.status_code < 500:
             return JSONResponse(
                 content={"detail": exc.detail}, status_code=exc.status_code
-            )
-        elif exc.status_code == 422 and not self.debug:
-            return JSONResponse(
-                content={"detail": ErrorDetailCode.BadRequestFields.value},
-                status_code=400,
             )
         else:
             if self.debug:
@@ -102,3 +101,13 @@ class SbugaFastAPI(FastAPI):
                 content={"detail": ErrorDetailCode.InternalServerError.value},
                 status_code=exc.status_code,
             )
+
+    async def validation_exception_handler(
+        self, request: Request, exc: RequestValidationError
+    ):
+        if self.debug:
+            raise exc
+        return JSONResponse(
+            content={"detail": ErrorDetailCode.BadRequestFields.value},
+            status_code=400,
+        )
