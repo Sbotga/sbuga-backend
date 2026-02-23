@@ -47,9 +47,12 @@ class PJSKClient:
 
         self.is_authenticated: bool = False
         self.user: SekaiUserAuthData | None = None
+        self.user_id: int | None = None
 
         self.data_path: Path = Path("pjsk_api") / "data" / region
         self.data_path.mkdir(parents=True, exist_ok=True)
+
+        self.master_cache: dict[str, dict] = {}
 
         self.got_426: bool = False
 
@@ -96,10 +99,15 @@ class PJSKClient:
             return data
 
     async def get_master(self, file: str) -> dict:
+        if file in self.master_cache:
+            return self.master_cache[file]
+
         master_path = self.data_path / "master" / f"{file}.json"
 
         async with aiofiles.open(master_path, "r", encoding="utf8") as f:
-            return json.loads(await f.read())
+            data = json.loads(await f.read())
+        self.master_cache[file] = data
+        return data
 
     async def request(self, req: RequestData[T]) -> Optional[T]:
         url = f"{req.base_url.rstrip('/')}/{req.path.lstrip('/')}"
