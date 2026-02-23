@@ -39,6 +39,11 @@ class SbugaFastAPI(FastAPI):
 
         self.pjsk_clients: dict[str, PJSKClient] = clients
 
+        # Event handlers
+        self.add_event_handler("shutdown", self.shutdown)
+
+        # Exception handlers
+        self.add_exception_handler(Exception, self.unhandled_exception_handler)
         self.add_exception_handler(
             RequestValidationError, self.validation_exception_handler
         )
@@ -132,3 +137,16 @@ class SbugaFastAPI(FastAPI):
             content={"detail": ErrorDetailCode.BadRequestFields.value},
             status_code=400,
         )
+
+    async def unhandled_exception_handler(self, request: Request, exc: Exception):
+        if self.debug:
+            raise exc
+        return JSONResponse(
+            content={"detail": ErrorDetailCode.InternalServerError.value},
+            status_code=500,
+        )
+
+    async def shutdown(self):
+        for client in self.pjsk_clients.values():
+            if client:
+                await client.close()

@@ -2,7 +2,7 @@ import os, importlib, traceback
 from urllib.parse import urlparse
 
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi import Request, status, Response
+from fastapi import Request, status
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 import uvicorn
 
@@ -21,19 +21,6 @@ else:
         redoc_url=None,
         openapi_url=None,
     )
-
-
-@app.middleware("http")
-async def no_unhandled_exceptions(request: Request, call_next):
-    try:
-        return await call_next(request)
-    except Exception:
-        traceback.print_exc()
-        return Response(
-            content="Unhandled error. Report to discord.gg/UntitledCharts",
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        )
-
 
 app.add_middleware(
     CORSMiddleware,
