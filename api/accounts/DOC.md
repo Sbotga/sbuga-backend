@@ -1,4 +1,4 @@
-## GET `/account/me`
+## GET `/api/account/me`
 
 Returns the authenticated account's full profile information.
 
@@ -22,7 +22,7 @@ Returns the authenticated account's full profile information.
     "banner_hash": "abc123...",
     "banned": false
   },
-  "asset_base_url": "https://assets.sbuga.com"
+  "asset_base_url": "public bucket base url"
 }
 ```
 
@@ -43,7 +43,7 @@ Timestamps are in **milliseconds since Unix epoch**. `profile_hash` and `banner_
 
 ---
 
-## DELETE `/account/profile`
+## DELETE `/api/account/profile`
 
 Deletes the authenticated account's profile picture.
 
@@ -75,7 +75,7 @@ Deletes the authenticated account's profile picture.
 
 ---
 
-## DELETE `/account/banner`
+## DELETE `/api/account/banner`
 
 Deletes the authenticated account's banner.
 
@@ -107,7 +107,7 @@ Deletes the authenticated account's banner.
 
 ---
 
-## POST `/account/description`
+## POST `/api/account/description`
 
 Updates the authenticated account's description.
 

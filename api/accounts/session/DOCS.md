@@ -1,4 +1,4 @@
-## POST `/accounts/session/refresh`
+## POST `/api/accounts/session/refresh`
 
 Exchanges a refresh token for a new access token.
 

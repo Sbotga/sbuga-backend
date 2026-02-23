@@ -1,4 +1,4 @@
-## GET `/accounts/{username}`
+## GET `/api/accounts/{username}`
 
 Returns public profile information for an account.
 
