@@ -27,6 +27,18 @@ ConfigTypeCloudflareTurnstile = TypedDict(
 
 ConfigTypeJWT = TypedDict("ConfigTypeJWT", {"secret": str})
 
+ConfigTypeS3 = TypedDict(
+    "ConfigTypeS3",
+    {
+        "base-url": str,
+        "endpoint": str,
+        "bucket-name": str,
+        "access-key-id": str,
+        "secret-access-key": str,
+        "location": str,
+    },
+)
+
 ConfigType = TypedDict(
     "ConfigType",
     {
@@ -34,6 +46,7 @@ ConfigType = TypedDict(
         "psql": ConfigTypePsql,
         "cloudflare-turnstile": ConfigTypeCloudflareTurnstile,
         "jwt": ConfigTypeJWT,
+        "s3": ConfigTypeS3,
     },
 )
 

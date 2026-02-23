@@ -12,7 +12,6 @@ Changes the display_name for the authenticated account.
 
 | Field | Type | Description |
 |---|---|---|
-| `password` | string | The current password. |
 | `new_display_name` | string | The new display name. |
 
 ### Response `200`
@@ -30,7 +29,7 @@ Username changed successfully.
 | Status | Detail | Detail Code |
 |---|---|---|
 | `400` | Invalid new display name. | `display_name_invalid` |
-| `401` | Old password is incorrect. | `invalid_login` |
+| `404` | Account not found (shouldn't happen) | `account_not_found` |
 
 ```json
 {

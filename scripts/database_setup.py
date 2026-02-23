@@ -46,6 +46,7 @@ async def main():
             description TEXT NOT NULL DEFAULT 'This user hasn''t set a description!',
             profile_hash TEXT DEFAULT NULL,
             banner_hash TEXT DEFAULT NULL,
+            valid_session_uuid TEXT NOT NULL DEFAULT gen_random_uuid()::TEXT,
             PRIMARY KEY (id)
         );
         """

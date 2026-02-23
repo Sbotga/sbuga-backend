@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Request, HTTPException, status
 from pydantic import BaseModel
 from core import SbugaFastAPI
-from helpers.passwords import verify_password
 from helpers import string_checks
 from helpers.session import get_session, Session
 from helpers.error_detail_codes import ErrorDetailCode
@@ -11,7 +10,6 @@ router = APIRouter()
 
 
 class ChangeDisplaynameBody(BaseModel):
-    password: str
     new_display_name: str
 
 
@@ -32,10 +30,10 @@ async def main(
     async with app.acquire_db() as conn:
         account = await conn.fetchrow(db.accounts.get_account_by_id(account_id))
 
-    if not account or not verify_password(body.password, account.salted_password):
+    if not account:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=ErrorDetailCode.InvalidAccountDetails.value,
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=ErrorDetailCode.AccountNotFound.value,
         )
 
     async with app.acquire_db() as conn:

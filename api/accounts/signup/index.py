@@ -78,15 +78,24 @@ async def main(request: Request, body: SignupBody):
             )
         )
 
+        account = await conn.fetchrow(db.accounts.get_account_by_id(account_id))
+
     access_token = create_session(account_id, type="access")
     refresh_token = create_session(account_id, type="refresh")
 
     return {
-        "id": account_id,
-        "display_name": body.display_name,
-        "username": body.username,
-        "created_at": now_ms,
-        "updated_at": now_ms,
+        "user": {
+            "id": account.id,
+            "display_name": account.display_name,
+            "username": account.username,
+            "created_at": now_ms,
+            "updated_at": now_ms,
+            "description": account.description,
+            "banned": account.banned,
+            "profile_hash": account.profile_hash,
+            "banner_hash": account.banner_hash,
+        },
         "access_token": access_token,
         "refresh_token": refresh_token,
+        "asset_base_url": app.s3_asset_base_url,
     }

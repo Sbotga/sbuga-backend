@@ -13,13 +13,10 @@ Signs into an existing account.
 ### Response
 ```json
 {
-  "id": 1234567890,
-  "username": "example",
-  "display_name": "Example",
-  "created_at": 1700000000000,
-  "updated_at": 1700000000000,
+  "user": {user data},
   "access_token": "access authorization token",
-  "refresh_token": "refresh authorization token"
+  "refresh_token": "refresh authorization token",
+  "asset_base_url": "public bucket asset base url"
 }
 ```
 

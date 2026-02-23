@@ -13,3 +13,10 @@ cloudflare-turnstile:
   secret-key: "your cloudflare turnstile secret key"
 jwt:
   secret: "your jwt secret" # python -c "import secrets; print(secrets.token_hex(64))"
+s3:
+  base-url: "..." # public access url where public can access your items
+  endpoint: "..." # endpoint for requests
+  bucket-name: "..."
+  access-key-id: "..."
+  secret-access-key: "..."
+  location: "auto" # note: auto is for R2 cloudflare only.

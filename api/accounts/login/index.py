@@ -45,11 +45,18 @@ async def main(request: Request, body: LoginBody):
     refresh_token = create_session(account.id, type="refresh")
 
     return {
-        "id": account.id,
-        "username": account.username,
-        "display_name": account.display_name,
-        "created_at": int(account.created_at.timestamp() * 1000),
-        "updated_at": int(account.updated_at.timestamp() * 1000),
+        "user": {
+            "id": account.id,
+            "display_name": account.display_name,
+            "username": account.username,
+            "created_at": int(account.created_at.timestamp() * 1000),
+            "updated_at": int(account.updated_at.timestamp() * 1000),
+            "description": account.description,
+            "banned": account.banned,
+            "profile_hash": account.profile_hash,
+            "banner_hash": account.banner_hash,
+        },
         "access_token": access_token,
         "refresh_token": refresh_token,
+        "asset_base_url": app.s3_asset_base_url,
     }

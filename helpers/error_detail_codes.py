@@ -10,6 +10,7 @@ class ErrorDetailCode(StrEnum):
     InvalidPassword = "password_invalid"
     InvalidDisplayName = "display_name_invalid"
     UsernameConflict = "username_taken"
+    AccountNotFound = "account_not_found"
 
     InvalidAccountDetails = "invalid_login"
 
@@ -19,3 +20,7 @@ class ErrorDetailCode(StrEnum):
     Banned = "banned"
 
     TooMuchData = "too_much_data"
+    FileTooLarge = "file_too_large"
+    InvalidImage = "invalid_image"
+    Forbidden = "forbidden"
+    PJSKMaintainence = "maintainence_pjsk"

@@ -7,7 +7,9 @@ from helpers.config_loader import ConfigType
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
 from database import DBConnWrapper
+
 import asyncpg
+import aioboto3
 
 from typing import AsyncGenerator, Optional
 
@@ -30,6 +32,11 @@ class SbugaFastAPI(FastAPI):
         self.executor: ThreadPoolExecutor = ThreadPoolExecutor(max_workers=16)
         self.db: asyncpg.Pool | None = None
 
+        self.s3_session: aioboto3.Session | None = None
+        self.s3_session_getter: callable | None = None
+        self.s3_bucket: str | None = None
+        self.s3_asset_base_url: str | None = None
+
         self.pjsk_clients: dict[str, PJSKClient] = clients
 
         self.add_exception_handler(
@@ -39,6 +46,18 @@ class SbugaFastAPI(FastAPI):
 
     async def init(self) -> None:
         """Initialize all resources after worker process starts."""
+        self.s3_session = aioboto3.Session(
+            aws_access_key_id=self.config["s3"]["access-key-id"],
+            aws_secret_access_key=self.config["s3"]["secret-access-key"],
+            region_name=self.config["s3"]["location"],
+        )
+        self.s3_session_getter = lambda: self.s3_session.resource(
+            service_name="s3",
+            endpoint_url=self.config["s3"]["endpoint"],
+        )
+        self.s3_bucket = self.config["s3"]["bucket-name"]
+        self.s3_asset_base_url = self.config["s3"]["base-url"]
+
         psql_config = self.config["psql"]
         self.db = await asyncpg.create_pool(
             host=psql_config["host"],

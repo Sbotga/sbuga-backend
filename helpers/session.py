@@ -1,4 +1,5 @@
 import jwt
+import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Literal
 from dataclasses import dataclass
@@ -19,20 +20,29 @@ class SessionData:
     account_id: int
     type: Literal["access", "refresh"]
     exp: datetime
+    session_uuid: str
 
 
-def create_session(
-    account_id: int, type: Literal["access", "refresh"] = "access"
+async def create_session(
+    account_id: int, app: SbugaFastAPI, type: Literal["access", "refresh"] = "access"
 ) -> str:
-    expire_days = (
-        ACCESS_TOKEN_EXPIRE_DAYS if type == "access" else REFRESH_TOKEN_EXPIRE_DAYS
-    )
+    async with app.acquire_db() as conn:
+        account = await conn.fetchrow(accounts.get_account_by_id(account_id))
+
     payload = {
         "account_id": account_id,
         "type": type,
-        "exp": datetime.now(timezone.utc) + timedelta(days=expire_days),
+        "session_uuid": account.valid_session_uuid,
+        "exp": datetime.now(timezone.utc)
+        + timedelta(
+            days=(
+                ACCESS_TOKEN_EXPIRE_DAYS
+                if type == "access"
+                else REFRESH_TOKEN_EXPIRE_DAYS
+            )
+        ),
     }
-    return jwt.encode(payload, _get_secret(), algorithm=TOKEN_ALGORITHM)
+    return jwt.encode(payload, _get_secret(app), algorithm=TOKEN_ALGORITHM)
 
 
 def decode_session(token: str, app: SbugaFastAPI) -> SessionData:
@@ -42,6 +52,7 @@ def decode_session(token: str, app: SbugaFastAPI) -> SessionData:
             account_id=payload["account_id"],
             type=payload["type"],
             exp=datetime.fromtimestamp(payload["exp"], tz=timezone.utc),
+            session_uuid=payload["session_uuid"],
         )
     except jwt.ExpiredSignatureError:
         raise HTTPException(
@@ -100,6 +111,13 @@ class Session:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail=ErrorDetailCode.NotLoggedIn.value,
+                )
+
+            # Validate session UUID
+            if result and result.valid_session_uuid != self.session_data.session_uuid:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail=ErrorDetailCode.SessionInvalid.value,
                 )
 
             self._user = result
