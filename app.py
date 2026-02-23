@@ -47,17 +47,17 @@ app.add_middleware(
 #     app.add_middleware(TrustedHostMiddleware, allowed_hosts=[domain, "127.0.0.1"])
 
 
-# @app.middleware("http")
-# async def force_https_redirect(request, call_next):
-#     response = await call_next(request)
+@app.middleware("http")
+async def force_https_redirect(request, call_next):
+    response = await call_next(request)
 
-#     if config["server"]["force-https"] and not debug:
-#         if response.headers.get("Location"):
-#             response.headers["Location"] = response.headers.get("Location").replace(
-#                 "http://", "https://", 1
-#             )
+    if not debug:
+        if response.headers.get("Location"):
+            response.headers["Location"] = response.headers.get("Location").replace(
+                "http://", "https://", 1
+            )
 
-#     return response
+    return response
 
 
 # app.mount("/static", StaticFiles(directory="static"), name="static")
