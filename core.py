@@ -32,10 +32,10 @@ class SbugaFastAPI(FastAPI):
 
         self.pjsk_clients: dict[str, PJSKClient] = clients
 
-        self.exception_handlers.setdefault(HTTPException, self.http_exception_handler)
-        self.exception_handlers.setdefault(
+        self.add_exception_handler(
             RequestValidationError, self.validation_exception_handler
         )
+        self.add_exception_handler(HTTPException, self.http_exception_handler)
 
     async def init(self) -> None:
         """Initialize all resources after worker process starts."""
