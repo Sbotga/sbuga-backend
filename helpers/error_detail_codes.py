@@ -17,3 +17,5 @@ class ErrorDetailCode(StrEnum):
     SessionExpired = "session_expired"
     SessionInvalid = "session_invalid"
     Banned = "banned"
+
+    TooMuchData = "too_much_data"

@@ -25,6 +25,7 @@ Returns the indexes of inappropriate text based on PJSK's block and allow word l
 
 | Status | Detail | Detail Code |
 |---|---|---|
+| `400` | Text is too long (max 1024 characters). | `too_much_data` |
 | `400` | Invalid region. | `bad_request` |
 
 ```json

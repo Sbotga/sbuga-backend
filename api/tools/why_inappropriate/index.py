@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Request, HTTPException, status
 from pydantic import BaseModel
 from core import SbugaFastAPI
+from helpers.error_detail_codes import ErrorDetailCode
 
 import re2
 
@@ -14,10 +15,19 @@ class CheckWordsBody(BaseModel):
     region: Literal["en", "jp"]
 
 
+MAX_TEXT_LENGTH = 1024
+
+
 @router.get("")
 async def main(request: Request, body: CheckWordsBody):
     app: SbugaFastAPI = request.app
     client = app.pjsk_clients[body.region]
+
+    if len(body.text) > MAX_TEXT_LENGTH:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=ErrorDetailCode.TooMuchData.value,
+        )
 
     try:
         allow_words: list = await client.get_master("allowWords")
