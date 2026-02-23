@@ -4,6 +4,7 @@ from enum import StrEnum
 class ErrorDetailCode(StrEnum):
     InternalServerError = "internal_server_error"
     BadRequestFields = "bad_request"
+    NotFound = "not_found"
 
     InvalidTurnstile = "turnstile_invalid"
     InvalidUsername = "username_invalid"

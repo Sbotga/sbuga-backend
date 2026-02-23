@@ -43,6 +43,7 @@ class SbugaFastAPI(FastAPI):
             RequestValidationError, self.validation_exception_handler
         )
         self.add_exception_handler(HTTPException, self.http_exception_handler)
+        self.add_exception_handler(404, self.http_exception_handler)
 
     async def init(self) -> None:
         """Initialize all resources after worker process starts."""
@@ -110,9 +111,10 @@ class SbugaFastAPI(FastAPI):
 
     async def http_exception_handler(self, request: Request, exc: HTTPException):
         if exc.status_code < 500:
-            return JSONResponse(
-                content={"detail": exc.detail}, status_code=exc.status_code
-            )
+            detail = exc.detail
+            if exc.status_code == 404 and exc.detail == "Not Found":
+                detail = ErrorDetailCode.NotFound.value
+            return JSONResponse(content={"detail": detail}, status_code=exc.status_code)
         else:
             if self.debug:
                 raise exc
