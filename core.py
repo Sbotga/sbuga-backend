@@ -7,13 +7,16 @@ from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
 from database import DBConnWrapper
 import asyncpg
-from typing import AsyncGenerator
 
-from authlib.integrations.starlette_client import OAuth
+from typing import AsyncGenerator, Optional
 
 from helpers.error_detail_codes import ErrorDetailCode
 
 from pjsk_api import clients, PJSKClient, set_client
+from pjsk_api.client import RequestData, T
+from pjsk_api.requests.authenticate_client import authenticate_client
+from pjsk_api.requests.ensure_updated_masterdata import ensure_updated_masterdata
+from pjsk_api.requests.request_handling import request_with_retry
 from pjsk_api.app_ver_hash import get_en, get_jp
 
 
@@ -27,8 +30,6 @@ class SbugaFastAPI(FastAPI):
         self.db: asyncpg.Pool | None = None
 
         self.pjsk_clients: dict[str, PJSKClient] = clients
-
-        self.oauth: OAuth | None = None
 
         self.exception_handlers.setdefault(HTTPException, self.http_exception_handler)
 
@@ -46,23 +47,31 @@ class SbugaFastAPI(FastAPI):
             ssl="disable",  # XXX: todo, lazy for now
         )
 
-    async def set_en_pjsk_client(self):
-        data = await get_en()
-        await set_client(
-            "en",
-            PJSKClient(
-                "en", app_version=data["app_version"], app_hash=data["app_hash"]
-            ),
-        )
+        asyncio.create_task(self._set_en_pjsk_client())
+        asyncio.create_task(self.set_jp_pjsk_client())
 
-    async def set_jp_pjsk_client(self):
-        data = await get_jp()
-        await set_client(
-            "jp",
-            PJSKClient(
-                "jp", app_version=data["app_version"], app_hash=data["app_hash"]
-            ),
+    async def _set_en_pjsk_client(self):
+        data = await get_en()
+        client = PJSKClient(
+            "en", app_version=data["app_version"], app_hash=data["app_hash"]
         )
+        await client.start()
+        await authenticate_client(client)
+        await ensure_updated_masterdata(client)
+        await set_client("en", client)
+
+    async def _set_jp_pjsk_client(self):
+        data = await get_jp()
+        client = PJSKClient(
+            "jp", app_version=data["app_version"], app_hash=data["app_hash"]
+        )
+        await client.start()
+        await authenticate_client(client)
+        await ensure_updated_masterdata(client)
+        await set_client("jp", client)
+
+    async def pjsk_request(self, region: str, request: RequestData[T]) -> Optional[T]:
+        return await request_with_retry(self.pjsk_clients[region], request, set_client)
 
     @asynccontextmanager
     async def acquire_db(self) -> AsyncGenerator[DBConnWrapper, None]:

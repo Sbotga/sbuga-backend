@@ -1,10 +1,13 @@
 import aiohttp
+import json
+import aiofiles
 from msgpack import unpackb, packb
 from pjsk_api.crypto import encrypt, decrypt
 from pjsk_api.constants import keys
 from typing import Any, Optional, Type, TypeVar, Generic
 from pydantic import BaseModel
-
+from pathlib import Path
+from .models import SekaiUserAuthData
 
 APP_PLATFORM_NAMES = {
     "ios": "iOS",
@@ -41,7 +44,14 @@ class PJSKClient:
         self.app_platform = app_platform
         self.unity_version = unity_version
         self._session: aiohttp.ClientSession = None
+
         self.is_authenticated: bool = False
+        self.user: SekaiUserAuthData | None = None
+
+        self.data_path: Path = Path("pjsk_api") / "data" / region
+        self.data_path.mkdir(parents=True, exist_ok=True)
+
+        self.got_426: bool = False
 
     @property
     def keyset(self):
@@ -85,6 +95,12 @@ class PJSKClient:
         except Exception:
             return data
 
+    async def get_master(self, file: str) -> dict:
+        master_path = self.data_path / "master" / f"{file}.json"
+
+        async with aiofiles.open(master_path, "r", encoding="utf8") as f:
+            return json.loads(await f.read())
+
     async def request(self, req: RequestData[T]) -> Optional[T]:
         url = f"{req.base_url.rstrip('/')}/{req.path.lstrip('/')}"
         body = self._pack(req.data) if req.data is not None else None
@@ -98,6 +114,8 @@ class PJSKClient:
         ) as response:
             raw = await response.read()
             if response.status >= 400:
+                if response.status == 426:
+                    self.got_426 = True
                 raise aiohttp.ClientResponseError(
                     response.request_info,
                     response.history,
@@ -106,7 +124,7 @@ class PJSKClient:
                 )
 
             if "Set-Cookie" in response.headers:
-                self._session.cookie_jar.update_cookies(response.cookies, response.url)
+                self._session.headers.update({"Cookie": response.headers["Set-Cookie"]})
 
             session_token = response.headers.get("X-Session-Token")
             if session_token:

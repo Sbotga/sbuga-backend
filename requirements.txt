@@ -10,3 +10,4 @@ PyJWT
 msgpack
 pycryptodome
 packaging
+aiofiles
