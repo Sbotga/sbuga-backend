@@ -71,6 +71,28 @@ async def _upload_s3(app: SbugaFastAPI, png_bytes: bytes, webp_bytes: bytes, pat
         )
 
 
+@router.get("/me")
+async def get_self(request: Request, session: Session = get_session()):
+    app: SbugaFastAPI = request.app
+
+    account = await session.user()
+
+    return {
+        "user": {
+            "id": account.id,
+            "display_name": account.display_name,
+            "username": account.username,
+            "created_at": int(account.created_at.timestamp() * 1000),
+            "updated_at": int(account.updated_at.timestamp() * 1000),
+            "description": account.description,
+            "profile_hash": account.profile_hash,
+            "banner_hash": account.banner_hash,
+            "banned": account.banned,
+        },
+        "asset_base_url": app.s3_asset_base_url,
+    }
+
+
 @router.delete("/profile")
 async def delete_profile(request: Request, session: Session = get_session()):
     app: SbugaFastAPI = request.app

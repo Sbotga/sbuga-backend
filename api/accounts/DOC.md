@@ -1,3 +1,48 @@
+## GET `/account/me`
+
+Returns the authenticated account's full profile information.
+
+### Authorization
+
+| Header | Value |
+|---|---|
+| `Authorization` | Access token obtained from signin or signup. |
+
+### Response `200`
+```json
+{
+  "user": {
+    "id": 1234567890,
+    "display_name": "Example",
+    "username": "example",
+    "created_at": 1700000000000,
+    "updated_at": 1700000000000,
+    "description": "This user hasn't set a description!",
+    "profile_hash": "abc123...",
+    "banner_hash": "abc123...",
+    "banned": false
+  },
+  "asset_base_url": "https://assets.sbuga.com"
+}
+```
+
+Timestamps are in **milliseconds since Unix epoch**. `profile_hash` and `banner_hash` may be `null` if not set.
+
+### Errors
+
+| Status | Detail | Detail Code |
+|---|---|---|
+| `401` | Not logged in. | `not_logged_in` |
+| `401` | Token expired. | `session_expired` |
+| `401` | Invalid token. | `session_invalid` |
+```json
+{
+  "detail": "detail_code"
+}
+```
+
+---
+
 ## DELETE `/account/profile`
 
 Deletes the authenticated account's profile picture.
