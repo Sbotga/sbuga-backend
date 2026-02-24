@@ -36,6 +36,7 @@ class UserSlot:
         self.session: aiohttp.ClientSession = None
         self.user: SekaiUserAuthData | None = None
         self.user_id: int | None = None
+        self.credential: str | None = None
         self.in_use: bool = False
 
 
@@ -131,7 +132,7 @@ class PJSKClient:
     def _unpack(self, data: bytes) -> Any:
         try:
             decrypted = decrypt(data, self.keyset)
-            return unpackb(decrypted, raw=False)
+            return unpackb(decrypted, raw=False, strict_map_key=False)
         except Exception:
             return data
 
@@ -165,12 +166,14 @@ class PJSKClient:
             if response.status >= 400:
                 if response.status == 426:
                     self.got_426 = True
-                raise aiohttp.ClientResponseError(
+                err = aiohttp.ClientResponseError(
                     response.request_info,
                     response.history,
                     status=response.status,
                     message=raw.decode(errors="replace"),
                 )
+                err.slot = slot
+                raise err
 
             if "Set-Cookie" in response.headers:
                 self.update_shared_headers({"Cookie": response.headers["Set-Cookie"]})
