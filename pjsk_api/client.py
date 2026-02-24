@@ -68,7 +68,7 @@ class PJSKClient:
         self._slot_semaphore: asyncio.Semaphore = asyncio.Semaphore(self.num_users)
         self._slot_lock: asyncio.Lock = asyncio.Lock()
 
-        # Shared headers applied to all slots — updated via update_shared_headers()
+        # shared headers applied to all slots
         self._shared_headers: dict[str, str] = {}
 
     @property

@@ -1,0 +1,72 @@
+from core import SbugaFastAPI
+from fastapi import APIRouter, Request, HTTPException, status
+from helpers.error_detail_codes import ErrorDetailCode
+from pjsk_api.requests import ranked as pjsk_ranked_requests
+from typing import Literal
+import time
+
+router = APIRouter()
+
+cached = {}
+CACHE_TTL = 300
+
+
+def get_current_season(seasons: list) -> dict | None:
+    now = int(time.time() * 1000)
+
+    for season in seasons:
+        if season["startAt"] < now < season["closedAt"]:
+            return {"id": season["id"], "status": "going"}
+
+    if not seasons:
+        return None
+
+    # no active season so use latest
+    if len(seasons) == 1 and now < seasons[0]["startAt"]:
+        return None
+
+    latest = seasons[-1]
+    return {"id": latest["id"], "status": "end"}
+
+
+@router.get("")
+async def current_ranked(request: Request, region: Literal["en", "jp"]):
+    app: SbugaFastAPI = request.app
+
+    prev = cached.get(region, {})
+    if prev.get("updated", 0) + CACHE_TTL > time.time():
+        return prev
+
+    client = app.pjsk_clients.get(region)
+    if not client:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=ErrorDetailCode.InternalServerError.value,
+        )
+
+    seasons = await client.get_master("rankMatchSeasons")
+    season = get_current_season(seasons)
+
+    updated = time.time()
+
+    if not season:
+        return {
+            "updated": updated,
+            "next_available_update": updated + CACHE_TTL,
+            "season_id": None,
+        }
+
+    top_100 = await app.pjsk_request(
+        region, pjsk_ranked_requests.leaderboard_request(client, season["id"])
+    )
+
+    data = {
+        "updated": updated,
+        "next_available_update": updated + CACHE_TTL,
+        "season_id": season["id"],
+        "season_status": season["status"],
+        "top_100": top_100,
+    }
+    cached[region] = data
+
+    return data

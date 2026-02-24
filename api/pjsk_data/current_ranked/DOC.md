@@ -1,0 +1,44 @@
+## GET `/api/pjsk_data/current_ranked`
+
+Returns the current PJSK ranked season data including the top 100 leaderboard.
+
+### Query Parameters
+
+| Parameter | Type | Description |
+|---|---|---|
+| `region` | string | The PJSK region. `en` or `jp`. |
+
+### Response `200`
+```json
+{
+  "updated": 1700000000.0,
+  "next_available_update": 1700000300.0,
+  "season_id": 123,
+  "season_status": "going",
+  "top_100": {official pjsk data},
+}
+```
+
+`season_status` is one of `going` or `end`. Data is cached for **5 minutes** — `next_available_update` indicates when fresh data will be available.
+
+### Response `200` (no active event)
+```json
+{
+  "updated": 1700000000.0,
+  "next_available_update": 1700000300.0,
+  "season_id": null
+}
+```
+
+### Errors
+
+| Status | Detail | Detail Code |
+|---|---|---|
+| `503` | PJSK client unavailable. | `internal_server_error` |
+| `503` | PJSK client maintainence. | `maintainence_pjsk` |
+
+```json
+{
+  "detail": "detail_code"
+}
+```

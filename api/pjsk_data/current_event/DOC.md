@@ -15,8 +15,8 @@ Returns the current PJSK event data including the top 100 leaderboard and rankin
   "next_available_update": 1700000300.0,
   "event_id": 123,
   "event_status": "going",
-  "top_100": {},
-  "border": {}
+  "top_100": {official pjsk data},
+  "border": {official pjsk data}
 }
 ```
 
