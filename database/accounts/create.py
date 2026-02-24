@@ -6,7 +6,7 @@ def create_account(
 ) -> ExecutableQuery:
     return ExecutableQuery(
         """
-        INSERT INTO account (account_id, display_name, username, salted_password)
+        INSERT INTO account (id, display_name, username, salted_password)
         VALUES ($1, $2, $3, $4);
         """,
         account_id,

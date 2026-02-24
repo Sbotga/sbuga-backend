@@ -5,7 +5,7 @@ def delete_account(account_id: int) -> ExecutableQuery:
     return ExecutableQuery(
         """
         DELETE FROM account
-        WHERE account_id = $1;
+        WHERE id = $1;
         """,
         account_id,
     )

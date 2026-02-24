@@ -19,7 +19,7 @@ def update_account_username(account_id: int, username: str) -> ExecutableQuery:
         """
         UPDATE account
         SET username = $2, updated_at = NOW()
-        WHERE account_id = $1;
+        WHERE id = $1;
         """,
         account_id,
         username,
@@ -31,7 +31,7 @@ def update_account_display_name(account_id: int, display_name: str) -> Executabl
         """
         UPDATE account
         SET display_name = $2, updated_at = NOW()
-        WHERE account_id = $1;
+        WHERE id = $1;
         """,
         account_id,
         display_name,
@@ -40,7 +40,7 @@ def update_account_display_name(account_id: int, display_name: str) -> Executabl
 
 def update_description(account_id: int, description: str) -> ExecutableQuery:
     return ExecutableQuery(
-        "UPDATE accounts SET description = $1 WHERE account_id = $2",
+        "UPDATE accounts SET description = $1 WHERE id = $2",
         description,
         account_id,
     )
@@ -50,7 +50,7 @@ def update_profile_hash(
     account_id: int, profile_hash: Optional[str]
 ) -> ExecutableQuery:
     return ExecutableQuery(
-        "UPDATE accounts SET profile_hash = $1 WHERE account_id = $2",
+        "UPDATE accounts SET profile_hash = $1 WHERE id = $2",
         profile_hash,
         account_id,
     )
@@ -58,7 +58,7 @@ def update_profile_hash(
 
 def update_banner_hash(account_id: int, banner_hash: Optional[str]) -> ExecutableQuery:
     return ExecutableQuery(
-        "UPDATE accounts SET banner_hash = $1 WHERE account_id = $2",
+        "UPDATE accounts SET banner_hash = $1 WHERE id = $2",
         banner_hash,
         account_id,
     )

@@ -6,7 +6,7 @@ def get_account_by_id(account_id: int) -> SelectQuery[Account]:
     return SelectQuery(
         Account,
         """
-        SELECT * FROM account WHERE account_id = $1;
+        SELECT * FROM account WHERE id = $1;
         """,
         account_id,
     )
