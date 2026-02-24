@@ -8,6 +8,7 @@ Creates a new account.
 
 | Field | Type | Description |
 |---|---|---|
+| `display_name` | string | The desired display name. Must pass display name validation. |
 | `username` | string | The desired username. Must pass username validation. |
 | `password` | string | The desired password. Must pass password validation. |
 | `turnstile_response` | string | Cloudflare Turnstile token from the client-side widget. |
