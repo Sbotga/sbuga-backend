@@ -37,18 +37,23 @@ async def main(request: Request, body: CheckWordsBody):
     block_words: list = await client.get_master("ngWords")
 
     text = body.text
-
     allowed_patterns = [re2.escape(a["word"]) for a in allow_words]
+    allowed_ranges = []
     if allowed_patterns:
-        scrubbed = re2.sub(f"(?i)({'|'.join(allowed_patterns)})", "", text)
-    else:
-        scrubbed = text
+        for match in re2.finditer(f"(?i)({'|'.join(allowed_patterns)})", text):
+            allowed_ranges.append((match.start(), match.end()))
+
+    def is_allowed(start, end):
+        return any(
+            a_start <= start and end <= a_end for a_start, a_end in allowed_ranges
+        )
 
     indexes = []
     for block in block_words:
         word = re2.escape(block["word"])
-        for match in re2.finditer(f"(?i){word}", scrubbed):
-            indexes.append({"start": match.start(), "end": match.end()})
+        for match in re2.finditer(f"(?i){word}", text):
+            if not is_allowed(match.start(), match.end()):
+                indexes.append({"start": match.start(), "end": match.end()})
 
     indexes.sort(key=lambda x: x["start"])
     merged = []
