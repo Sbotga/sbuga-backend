@@ -4,11 +4,19 @@ from helpers.error_detail_codes import ErrorDetailCode
 from pjsk_api.requests import ranked as pjsk_ranked_requests
 from typing import Literal
 import time
+import asyncio
 
 router = APIRouter()
 
 cached = {}
+locks: dict[str, asyncio.Lock] = {}
 CACHE_TTL = 300
+
+
+def get_lock(region: str) -> asyncio.Lock:
+    if region not in locks:
+        locks[region] = asyncio.Lock()
+    return locks[region]
 
 
 def get_current_season(seasons: list) -> dict | None:
@@ -21,7 +29,6 @@ def get_current_season(seasons: list) -> dict | None:
     if not seasons:
         return None
 
-    # no active season so use latest
     if len(seasons) == 1 and now < seasons[0]["startAt"]:
         return None
 
@@ -37,36 +44,44 @@ async def current_ranked(request: Request, region: Literal["en", "jp"]):
     if prev.get("updated", 0) + CACHE_TTL > time.time():
         return prev
 
-    client = app.pjsk_clients.get(region)
-    if not client:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=ErrorDetailCode.InternalServerError.value,
+    lock = get_lock(region)
+
+    async with lock:
+        # check acquiring lock in case another request just updated it
+        prev = cached.get(region, {})
+        if prev.get("updated", 0) + CACHE_TTL > time.time():
+            return prev
+
+        client = app.pjsk_clients.get(region)
+        if not client:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=ErrorDetailCode.InternalServerError.value,
+            )
+
+        seasons = await client.get_master("rankMatchSeasons")
+        season = get_current_season(seasons)
+
+        updated = time.time()
+
+        if not season:
+            return {
+                "updated": updated,
+                "next_available_update": updated + CACHE_TTL,
+                "season_id": None,
+            }
+
+        top_100 = await app.pjsk_request(
+            region, pjsk_ranked_requests.leaderboard_request(client, season["id"])
         )
 
-    seasons = await client.get_master("rankMatchSeasons")
-    season = get_current_season(seasons)
-
-    updated = time.time()
-
-    if not season:
-        return {
+        data = {
             "updated": updated,
             "next_available_update": updated + CACHE_TTL,
-            "season_id": None,
+            "season_id": season["id"],
+            "season_status": season["status"],
+            "top_100": top_100,
         }
+        cached[region] = data
 
-    top_100 = await app.pjsk_request(
-        region, pjsk_ranked_requests.leaderboard_request(client, season["id"])
-    )
-
-    data = {
-        "updated": updated,
-        "next_available_update": updated + CACHE_TTL,
-        "season_id": season["id"],
-        "season_status": season["status"],
-        "top_100": top_100,
-    }
-    cached[region] = data
-
-    return data
+        return data
