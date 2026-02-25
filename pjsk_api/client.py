@@ -28,6 +28,10 @@ class RequestData(BaseModel, Generic[T]):
     params: Optional[dict] = None
     response_model: Optional[Type[T]] = None
 
+    trailing_slash: bool = (
+        False  # because VERY rarely, some routes have a trailing slash (don't ask me lol)
+    )
+
     model_config = {"arbitrary_types_allowed": True}
 
 
@@ -152,6 +156,10 @@ class PJSKClient:
         url = f"{req.base_url.rstrip('/')}/{req.path.lstrip('/')}".format_map(
             {"user_id": slot.user_id}
         )
+        if req.trailing_slash:
+            url = url.rstrip("/") + "/"
+        else:
+            url = url.rstrip("/")
         body = self._pack(req.data) if req.data is not None else None
 
         async with slot.session.request(

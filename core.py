@@ -19,6 +19,7 @@ from pjsk_api import clients, PJSKClient, set_client
 from pjsk_api.client import RequestData, T
 from pjsk_api.requests.authenticate_client import authenticate_client
 from pjsk_api.requests.ensure_updated_masterdata import ensure_updated_masterdata
+from pjsk_api.requests.ensure_updated_assetinfo import ensure_updated_assetinfo
 from pjsk_api.requests.request_handling import request_with_retry
 from pjsk_api.app_ver_hash import get_en, get_jp
 
@@ -87,6 +88,7 @@ class SbugaFastAPI(FastAPI):
         await client.start()
         await authenticate_client(client)
         await ensure_updated_masterdata(client)
+        await ensure_updated_assetinfo(client)
         await set_client("en", client)
 
     async def _set_jp_pjsk_client(self):
@@ -97,6 +99,7 @@ class SbugaFastAPI(FastAPI):
         await client.start()
         await authenticate_client(client)
         await ensure_updated_masterdata(client)
+        await ensure_updated_assetinfo(client)
         await set_client("jp", client)
 
     async def pjsk_request(self, region: str, request: RequestData[T]) -> Optional[T]:
