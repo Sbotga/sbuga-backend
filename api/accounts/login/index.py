@@ -7,8 +7,7 @@ from helpers.turnstile import verify_turnstile
 import database as db
 
 from helpers.session import create_session
-
-from helpers.error_detail_codes import ErrorDetailCode
+from helpers.erroring import ErrorDetailCode, ERROR_RESPONSE
 
 router = APIRouter()
 
@@ -19,7 +18,48 @@ class LoginBody(BaseModel):
     turnstile_response: str
 
 
-@router.post("")
+USER_EXAMPLE = {
+    "id": 1234567890,
+    "display_name": "Example",
+    "username": "example",
+    "created_at": 1700000000000,
+    "updated_at": 1700000000000,
+    "description": "This user hasn't set a description!",
+    "banned": False,
+    "profile_hash": None,
+    "banner_hash": None,
+}
+
+
+@router.post(
+    "",
+    summary="Sign in",
+    description="Signs into an existing account. Returns the user, access token, refresh token, and asset base URL. Timestamps are in milliseconds since Unix epoch.",
+    responses={
+        200: {
+            "description": "Signed in successfully.",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "user": USER_EXAMPLE,
+                        "access_token": "eyJ...",
+                        "refresh_token": "eyJ...",
+                        "asset_base_url": "https://assets.sbuga.com",
+                    }
+                }
+            },
+        },
+        400: {
+            "description": f"Invalid turnstile response. (`{ErrorDetailCode.InvalidTurnstile}`)",
+            **ERROR_RESPONSE,
+        },
+        401: {
+            "description": f"Invalid username or password. (`{ErrorDetailCode.InvalidAccountDetails}`)",
+            **ERROR_RESPONSE,
+        },
+    },
+    tags=["Auth"],
+)
 async def main(request: Request, body: LoginBody):
     app: SbugaFastAPI = request.app
 
@@ -41,8 +81,8 @@ async def main(request: Request, body: LoginBody):
             detail=ErrorDetailCode.InvalidAccountDetails.value,
         )
 
-    access_token = create_session(account.id, type="access")
-    refresh_token = create_session(account.id, type="refresh")
+    access_token = await create_session(account.id, app, type="access")
+    refresh_token = await create_session(account.id, app, type="refresh")
 
     return {
         "user": {

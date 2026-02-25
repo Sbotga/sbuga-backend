@@ -1,6 +1,6 @@
 from core import SbugaFastAPI
 from fastapi import APIRouter, Request, HTTPException, status
-from helpers.error_detail_codes import ErrorDetailCode
+from helpers.erroring import ErrorDetailCode, ERROR_RESPONSE, COMMON_RESPONSES
 from pjsk_api.requests import ranked as pjsk_ranked_requests
 from typing import Literal
 import time
@@ -36,7 +36,47 @@ def get_current_season(seasons: list) -> dict | None:
     return {"id": latest["id"], "status": "end"}
 
 
-@router.get("")
+@router.get(
+    "",
+    summary="Current ranked season",
+    description=(
+        "Returns the current PJSK ranked season data including the top 100 leaderboard. "
+        "`season_status` is one of `going` or `end`. "
+        "Data is cached for **5 minutes** — `next_available_update` indicates when fresh data will be available. "
+        "If there is no active season, `season_id` will be `null` and no leaderboard data is returned."
+    ),
+    responses={
+        200: {
+            "description": "Success",
+            "content": {
+                "application/json": {
+                    "examples": {
+                        "active": {
+                            "summary": "Active season",
+                            "value": {
+                                "updated": 1700000000.0,
+                                "next_available_update": 1700000300.0,
+                                "season_id": 123,
+                                "season_status": "going",
+                                "top_100": {},
+                            },
+                        },
+                        "none": {
+                            "summary": "No active season",
+                            "value": {
+                                "updated": 1700000000.0,
+                                "next_available_update": 1700000300.0,
+                                "season_id": None,
+                            },
+                        },
+                    }
+                }
+            },
+        },
+        503: COMMON_RESPONSES[503],
+    },
+    tags=["PJSK Data"],
+)
 async def current_ranked(request: Request, region: Literal["en", "jp"]):
     app: SbugaFastAPI = request.app
 
@@ -47,7 +87,6 @@ async def current_ranked(request: Request, region: Literal["en", "jp"]):
     lock = get_lock(region)
 
     async with lock:
-        # check acquiring lock in case another request just updated it
         prev = cached.get(region, {})
         if prev.get("updated", 0) + CACHE_TTL > time.time():
             return prev

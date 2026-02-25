@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from core import SbugaFastAPI
 from helpers import string_checks
 from helpers.session import get_session, Session
-from helpers.error_detail_codes import ErrorDetailCode
+from helpers.erroring import ErrorDetailCode, ERROR_RESPONSE
 import database as db
 
 router = APIRouter()
@@ -13,7 +13,35 @@ class ChangeDisplaynameBody(BaseModel):
     new_display_name: str
 
 
-@router.post("")
+@router.post(
+    "",
+    summary="Change display name",
+    description="Changes the display name for the authenticated account.",
+    responses={
+        200: {
+            "description": "Display name changed successfully.",
+            "content": {
+                "application/json": {"example": {"display_name": "New Display Name"}}
+            },
+        },
+        400: {
+            "description": f"Invalid new display name. (`{ErrorDetailCode.InvalidDisplayName}`)",
+            **ERROR_RESPONSE,
+        },
+        401: {
+            "description": (
+                f"Not logged in or token invalid. "
+                f"(`{ErrorDetailCode.NotLoggedIn}`, `{ErrorDetailCode.SessionExpired}`, `{ErrorDetailCode.SessionInvalid}`)"
+            ),
+            **ERROR_RESPONSE,
+        },
+        404: {
+            "description": f"Account not found. (`{ErrorDetailCode.AccountNotFound}`)",
+            **ERROR_RESPONSE,
+        },
+    },
+    tags=["Account"],
+)
 async def main(
     request: Request, body: ChangeDisplaynameBody, session: Session = get_session()
 ):

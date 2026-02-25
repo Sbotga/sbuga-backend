@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from database import accounts
 from helpers.session import get_session, Session
 from helpers.hashing import calculate_sha256
-from helpers.error_detail_codes import ErrorDetailCode
+from helpers.erroring import ErrorDetailCode, ERROR_RESPONSE, COMMON_RESPONSES
 from PIL import Image
 import io
 
@@ -12,6 +12,17 @@ router = APIRouter()
 
 PROFILE_SIZE = (400, 400)
 BANNER_SIZE = (1200, 360)
+
+AUTH_RESPONSES = {
+    401: COMMON_RESPONSES[401],
+}
+
+SUCCESS_RESPONSE = {
+    200: {
+        "description": "Success",
+        "content": {"application/json": {"example": {"result": "success"}}},
+    }
+}
 
 
 class UpdateDescriptionBody(BaseModel):
@@ -71,10 +82,38 @@ async def _upload_s3(app: SbugaFastAPI, png_bytes: bytes, webp_bytes: bytes, pat
         )
 
 
-@router.get("/me")
+@router.get(
+    "/me",
+    summary="Get own account",
+    description="Returns the authenticated account's full profile information. Timestamps are in milliseconds since Unix epoch. `profile_hash` and `banner_hash` may be `null` if not set.",
+    responses={
+        200: {
+            "description": "Success",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "user": {
+                            "id": 1234567890,
+                            "display_name": "Example",
+                            "username": "example",
+                            "created_at": 1700000000000,
+                            "updated_at": 1700000000000,
+                            "description": "This user hasn't set a description!",
+                            "profile_hash": "abc123...",
+                            "banner_hash": "abc123...",
+                            "banned": False,
+                        },
+                        "asset_base_url": "https://assets.sbuga.com",
+                    }
+                }
+            },
+        },
+        **AUTH_RESPONSES,
+    },
+    tags=["Account"],
+)
 async def get_self(request: Request, session: Session = get_session()):
     app: SbugaFastAPI = request.app
-
     account = await session.user()
 
     return {
@@ -93,7 +132,13 @@ async def get_self(request: Request, session: Session = get_session()):
     }
 
 
-@router.delete("/profile")
+@router.delete(
+    "/profile",
+    summary="Delete profile picture",
+    description="Deletes the authenticated account's profile picture.",
+    responses={**SUCCESS_RESPONSE, **AUTH_RESPONSES},
+    tags=["Account"],
+)
 async def delete_profile(request: Request, session: Session = get_session()):
     app: SbugaFastAPI = request.app
     user = await session.user()
@@ -106,7 +151,13 @@ async def delete_profile(request: Request, session: Session = get_session()):
     return {"result": "success"}
 
 
-@router.delete("/banner")
+@router.delete(
+    "/banner",
+    summary="Delete banner",
+    description="Deletes the authenticated account's banner.",
+    responses={**SUCCESS_RESPONSE, **AUTH_RESPONSES},
+    tags=["Account"],
+)
 async def delete_banner(request: Request, session: Session = get_session()):
     app: SbugaFastAPI = request.app
     user = await session.user()
@@ -119,7 +170,13 @@ async def delete_banner(request: Request, session: Session = get_session()):
     return {"result": "success"}
 
 
-@router.post("/description")
+@router.post(
+    "/description",
+    summary="Update description",
+    description="Updates the authenticated account's description.",
+    responses={**SUCCESS_RESPONSE, **AUTH_RESPONSES},
+    tags=["Account"],
+)
 async def update_description(
     request: Request, body: UpdateDescriptionBody, session: Session = get_session()
 ):
@@ -132,7 +189,31 @@ async def update_description(
     return {"result": "success"}
 
 
-@router.post("/profile/upload")
+@router.post(
+    "/profile/upload",
+    summary="Upload profile picture",
+    description="Uploads a profile picture for the authenticated account. Image will be resized to 400x400 and saved as PNG and WebP. Max size: **10MB**.",
+    responses={
+        200: {
+            "description": "Success",
+            "content": {
+                "application/json": {
+                    "example": {"result": "success", "hash": "abc123..."}
+                }
+            },
+        },
+        400: {
+            "description": f"Invalid image file. (`{ErrorDetailCode.InvalidImage}`)",
+            **ERROR_RESPONSE,
+        },
+        413: {
+            "description": f"File size exceeds 10MB limit. (`{ErrorDetailCode.FileTooLarge}`)",
+            **ERROR_RESPONSE,
+        },
+        **AUTH_RESPONSES,
+    },
+    tags=["Account"],
+)
 async def upload_profile(
     request: Request, file: UploadFile, session: Session = get_session()
 ):
@@ -140,7 +221,7 @@ async def upload_profile(
     user = await session.user()
 
     file_content = await file.read()
-    if len(file_content) > 10 * 1024 * 1024:  # 10 mb
+    if len(file_content) > 10 * 1024 * 1024:
         raise HTTPException(
             status_code=status.HTTP_413_CONTENT_TOO_LARGE,
             detail=ErrorDetailCode.FileTooLarge.value,
@@ -158,7 +239,31 @@ async def upload_profile(
     return {"result": "success", "hash": file_hash}
 
 
-@router.post("/banner/upload")
+@router.post(
+    "/banner/upload",
+    summary="Upload banner",
+    description="Uploads a banner for the authenticated account. Image will be resized to 1200x360 and saved as PNG and WebP. Max size: **15MB**.",
+    responses={
+        200: {
+            "description": "Success",
+            "content": {
+                "application/json": {
+                    "example": {"result": "success", "hash": "abc123..."}
+                }
+            },
+        },
+        400: {
+            "description": f"Invalid image file. (`{ErrorDetailCode.InvalidImage}`)",
+            **ERROR_RESPONSE,
+        },
+        413: {
+            "description": f"File size exceeds 15MB limit. (`{ErrorDetailCode.FileTooLarge}`)",
+            **ERROR_RESPONSE,
+        },
+        **AUTH_RESPONSES,
+    },
+    tags=["Account"],
+)
 async def upload_banner(
     request: Request, file: UploadFile, session: Session = get_session()
 ):

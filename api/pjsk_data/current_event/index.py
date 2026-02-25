@@ -1,7 +1,7 @@
 from core import SbugaFastAPI
 
 from fastapi import APIRouter, Request, HTTPException, status
-from helpers.error_detail_codes import ErrorDetailCode
+from helpers.erroring import ErrorDetailCode, COMMON_RESPONSES
 from pjsk_api.requests import event as pjsk_event_requests
 from typing import Literal
 import time, asyncio
@@ -34,7 +34,48 @@ def get_current_event(events: list) -> dict | None:
     return None
 
 
-@router.get("")
+@router.get(
+    "",
+    summary="Current event",
+    description=(
+        "Returns the current PJSK event data including the top 100 leaderboard and ranking borders. "
+        "`event_status` is one of `going`, `counting`, or `end`. "
+        "Data is cached for **5 minutes** — `next_available_update` indicates when fresh data will be available. "
+        "If there is no active event, `event_id` will be `null` and no leaderboard or border data is returned."
+    ),
+    responses={
+        200: {
+            "description": "Success",
+            "content": {
+                "application/json": {
+                    "examples": {
+                        "active": {
+                            "summary": "Active event",
+                            "value": {
+                                "updated": 1700000000.0,
+                                "next_available_update": 1700000300.0,
+                                "event_id": 123,
+                                "event_status": "going",
+                                "top_100": {},
+                                "border": {},
+                            },
+                        },
+                        "none": {
+                            "summary": "No active event",
+                            "value": {
+                                "updated": 1700000000.0,
+                                "next_available_update": 1700000300.0,
+                                "event_id": None,
+                            },
+                        },
+                    }
+                }
+            },
+        },
+        503: COMMON_RESPONSES[503],
+    },
+    tags=["PJSK Data"],
+)
 async def current_event(request: Request, region: Literal["en", "jp"]):
     app: SbugaFastAPI = request.app
 
@@ -45,7 +86,6 @@ async def current_event(request: Request, region: Literal["en", "jp"]):
     lock = get_lock(region)
 
     async with lock:
-        # check acquiring lock in case another request just updated it
         prev = cached.get(region, {})
         if prev.get("updated", 0) + CACHE_TTL > time.time():
             return prev

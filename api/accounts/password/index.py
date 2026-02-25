@@ -3,8 +3,8 @@ from pydantic import BaseModel
 from core import SbugaFastAPI
 from helpers.passwords import verify_password, hash_password
 from helpers import string_checks
-from helpers.session import get_session, Session
-from helpers.error_detail_codes import ErrorDetailCode
+from helpers.session import get_session, create_session, Session
+from helpers.erroring import ErrorDetailCode, ERROR_RESPONSE
 import database as db
 
 router = APIRouter()
@@ -15,7 +15,37 @@ class ChangePasswordBody(BaseModel):
     new_password: str
 
 
-@router.post("")
+@router.post(
+    "",
+    summary="Change password",
+    description="Changes the password for the authenticated account. Requires current password verification. All existing sessions are invalidated and new tokens are returned.",
+    responses={
+        200: {
+            "description": "Password changed successfully.",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "access_token": "eyJ...",
+                        "refresh_token": "eyJ...",
+                    }
+                }
+            },
+        },
+        400: {
+            "description": f"Invalid new password. (`{ErrorDetailCode.InvalidPassword}`)",
+            **ERROR_RESPONSE,
+        },
+        401: {
+            "description": (
+                f"Not logged in, token invalid, or old password incorrect. "
+                f"(`{ErrorDetailCode.NotLoggedIn}`, `{ErrorDetailCode.SessionExpired}`, "
+                f"`{ErrorDetailCode.SessionInvalid}`, `{ErrorDetailCode.InvalidAccountDetails}`)"
+            ),
+            **ERROR_RESPONSE,
+        },
+    },
+    tags=["Account"],
+)
 async def main(
     request: Request, body: ChangePasswordBody, session: Session = get_session()
 ):
@@ -45,4 +75,10 @@ async def main(
             db.accounts.update_account_password(account_id, salted_password)
         )
 
-    return {}
+    access_token = await create_session(account_id, app, type="access")
+    refresh_token = await create_session(account_id, app, type="refresh")
+
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+    }

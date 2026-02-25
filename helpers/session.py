@@ -7,7 +7,7 @@ from fastapi import Header, HTTPException, status, Request, Depends
 from core import SbugaFastAPI
 from database import accounts
 from helpers.models import Account
-from helpers.error_detail_codes import ErrorDetailCode
+from helpers.erroring import ErrorDetailCode
 
 
 TOKEN_ALGORITHM = "HS256"

@@ -5,7 +5,7 @@ from helpers.passwords import hash_password
 from helpers.utils import get_ip
 from helpers.turnstile import verify_turnstile
 from helpers import string_checks
-from helpers.error_detail_codes import ErrorDetailCode
+from helpers.erroring import ErrorDetailCode, ERROR_RESPONSE
 import database as db
 import time, secrets
 
@@ -21,7 +21,58 @@ class SignupBody(BaseModel):
     turnstile_response: str
 
 
-@router.post("")
+USER_EXAMPLE = {
+    "id": 1234567890,
+    "display_name": "Example",
+    "username": "example",
+    "created_at": 1700000000000,
+    "updated_at": 1700000000000,
+    "description": "This user hasn't set a description!",
+    "banned": False,
+    "profile_hash": None,
+    "banner_hash": None,
+}
+
+
+@router.post(
+    "",
+    summary="Sign up",
+    description="Creates a new account. Returns the created user, access token, refresh token, and asset base URL. Timestamps are in milliseconds since Unix epoch.",
+    responses={
+        200: {
+            "description": "Account created successfully.",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "user": USER_EXAMPLE,
+                        "access_token": "eyJ...",
+                        "refresh_token": "eyJ...",
+                        "asset_base_url": "https://assets.sbuga.com",
+                    }
+                }
+            },
+        },
+        400: {
+            "description": (
+                f"Validation error. "
+                f"(`{ErrorDetailCode.InvalidTurnstile}`, "
+                f"`{ErrorDetailCode.InvalidUsername}`, "
+                f"`{ErrorDetailCode.InvalidPassword}`, "
+                f"`{ErrorDetailCode.InvalidDisplayName}`)"
+            ),
+            **ERROR_RESPONSE,
+        },
+        409: {
+            "description": f"Username already taken. (`{ErrorDetailCode.UsernameConflict}`)",
+            **ERROR_RESPONSE,
+        },
+        500: {
+            "description": f"Internal error, e.g. rare account ID collision. (`{ErrorDetailCode.InternalServerError}`)",
+            **ERROR_RESPONSE,
+        },
+    },
+    tags=["Auth"],
+)
 async def main(request: Request, body: SignupBody):
     app: SbugaFastAPI = request.app
 
@@ -61,14 +112,10 @@ async def main(request: Request, body: SignupBody):
     now = time.time()
     now_ms = int(now * 1000)
 
-    epoch_offset = 1600218000000  # same as pjsk lol
-    timestamp_bits = now_ms - epoch_offset  # first 42 bits
-    # Randomize the last 22 bits
+    epoch_offset = 1600218000000
+    timestamp_bits = now_ms - epoch_offset
     random_bits = secrets.randbits(22)
     account_id = (timestamp_bits << 22) | random_bits
-    # ^ chance of collision is negligible, but exists.
-    # in that case, the db will error for us and return 500
-    # no need to worry about duplicates! :troll:
     salted_password = hash_password(body.password)
 
     async with app.acquire_db() as conn:
@@ -77,11 +124,10 @@ async def main(request: Request, body: SignupBody):
                 account_id, body.display_name, body.username, salted_password
             )
         )
-
         account = await conn.fetchrow(db.accounts.get_account_by_id(account_id))
 
-    access_token = create_session(account_id, type="access")
-    refresh_token = create_session(account_id, type="refresh")
+    access_token = await create_session(account_id, app, type="access")
+    refresh_token = await create_session(account_id, app, type="refresh")
 
     return {
         "user": {

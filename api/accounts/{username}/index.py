@@ -1,12 +1,43 @@
 from fastapi import APIRouter, Request, HTTPException, status
 from core import SbugaFastAPI
 from database import accounts
-from helpers.error_detail_codes import ErrorDetailCode
+from helpers.erroring import ErrorDetailCode, ERROR_RESPONSE
 
 router = APIRouter()
 
 
-@router.get("")
+@router.get(
+    "",
+    summary="Get account by username",
+    description="Returns public profile information for an account. Banned accounts return `404`. Timestamps are in milliseconds since Unix epoch. `profile_hash` and `banner_hash` may be `null` if not set.",
+    responses={
+        200: {
+            "description": "Account found.",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "user": {
+                            "id": 1234567890,
+                            "display_name": "Example",
+                            "username": "example",
+                            "created_at": 1700000000000,
+                            "updated_at": 1700000000000,
+                            "description": "This user hasn't set a description!",
+                            "profile_hash": "abc123...",
+                            "banner_hash": "abc123...",
+                        },
+                        "asset_base_url": "https://assets.sbuga.com",
+                    }
+                }
+            },
+        },
+        404: {
+            "description": f"Account not found or banned. (`{ErrorDetailCode.AccountNotFound}`)",
+            **ERROR_RESPONSE,
+        },
+    },
+    tags=["Account"],
+)
 async def get_account(request: Request, username: str):
     app: SbugaFastAPI = request.app
 

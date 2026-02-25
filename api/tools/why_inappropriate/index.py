@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Request, HTTPException, status
 from pydantic import BaseModel
 from core import SbugaFastAPI
-from helpers.error_detail_codes import ErrorDetailCode
+from helpers.erroring import ErrorDetailCode, ERROR_RESPONSE, COMMON_RESPONSES
 
 import re2
 
@@ -18,7 +18,37 @@ class CheckWordsBody(BaseModel):
 MAX_TEXT_LENGTH = 1024
 
 
-@router.post("")
+@router.post(
+    "",
+    summary="Check inappropriate text",
+    description=(
+        "Returns the character index ranges of inappropriate text based on PJSK's "
+        "block and allow word lists for a given region. "
+        "`start` and `end` are indexes (0 based, inclusive) text. "
+        "Overlapping ranges are merged. An empty array means the text is clean."
+    ),
+    responses={
+        200: {
+            "description": "Success",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "indexes": [
+                            {"start": 0, "end": 5},
+                            {"start": 12, "end": 20},
+                        ]
+                    }
+                }
+            },
+        },
+        400: {
+            "description": f"Text too long (`{ErrorDetailCode.TooMuchData}`) or invalid request (`{ErrorDetailCode.BadRequestFields}`).",
+            **ERROR_RESPONSE,
+        },
+        503: COMMON_RESPONSES[503],
+    },
+    tags=["PJSK Tools"],
+)
 async def main(request: Request, body: CheckWordsBody):
     app: SbugaFastAPI = request.app
     client = app.pjsk_clients[body.region]

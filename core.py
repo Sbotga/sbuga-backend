@@ -13,7 +13,7 @@ import aioboto3
 
 from typing import AsyncGenerator, Optional
 
-from helpers.error_detail_codes import ErrorDetailCode
+from helpers.erroring import ErrorDetailCode
 
 from pjsk_api import clients, PJSKClient, set_client
 from pjsk_api.client import RequestData, T
@@ -150,3 +150,13 @@ class SbugaFastAPI(FastAPI):
         for client in self.pjsk_clients.values():
             if client:
                 await client.close()
+
+    def openapi(self):
+        if self.openapi_schema:
+            return self.openapi_schema
+        schema = super().openapi()
+        for path in schema.get("paths", {}).values():
+            for operation in path.values():
+                operation.get("responses", {}).pop("422", None)
+        self.openapi_schema = schema
+        return self.openapi_schema

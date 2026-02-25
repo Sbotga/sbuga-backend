@@ -1,11 +1,10 @@
 import os, importlib, traceback
-from urllib.parse import urlparse
-
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import Request, status
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 import uvicorn
 
+from helpers.erroring import ERROR_RESPONSE, ErrorDetailCode
 from helpers.config_loader import get_config
 from core import SbugaFastAPI
 
@@ -13,13 +12,27 @@ config = get_config()
 debug = config.get("server", {}).get("debug")
 
 if debug:
-    app = SbugaFastAPI(config=config)
+    app = SbugaFastAPI(
+        config=config,
+        responses={
+            500: {
+                "description": f"Internal server error. (`{ErrorDetailCode.InternalServerError}`)",
+                **ERROR_RESPONSE,
+            },
+        },
+    )
 else:
     app = SbugaFastAPI(
         config=config,
         docs_url=None,
         redoc_url=None,
         openapi_url=None,
+        responses={
+            500: {
+                "description": f"Internal server error. (`{ErrorDetailCode.InternalServerError}`)",
+                **ERROR_RESPONSE,
+            },
+        },
     )
 
 app.add_middleware(
@@ -90,7 +103,7 @@ def load_routes(folder, cleanup: bool = True):
         except NotImplementedError:
             continue
 
-        route_version = route_name.split(".")[0]
+        # route_version = route_name.split(".")[0]
         route_name_parts = route_name.split(".")
 
         # it's the index for the route
@@ -101,11 +114,7 @@ def load_routes(folder, cleanup: bool = True):
         app.include_router(
             route.router,
             prefix="/" + route_name.replace(".", "/"),
-            tags=(
-                route.router.tags + [route_version]
-                if isinstance(route.router.tags, list)
-                else [route_version]
-            ),
+            tags=route.router.tags,
         )
 
         print(f"[API] Loaded Route {route_name}")

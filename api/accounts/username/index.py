@@ -4,7 +4,7 @@ from core import SbugaFastAPI
 from helpers.passwords import verify_password
 from helpers import string_checks
 from helpers.session import get_session, Session
-from helpers.error_detail_codes import ErrorDetailCode
+from helpers.erroring import ErrorDetailCode, ERROR_RESPONSE, COMMON_RESPONSES
 import database as db
 
 router = APIRouter()
@@ -15,7 +15,26 @@ class ChangeUsernameBody(BaseModel):
     new_username: str
 
 
-@router.post("")
+@router.post(
+    "",
+    summary="Change username",
+    description="Changes the username for the authenticated account. Requires current password verification.",
+    responses={
+        200: {
+            "description": "Username changed successfully.",
+            "content": {"application/json": {"example": {"username": "new_username"}}},
+        },
+        400: {
+            "description": f"Invalid new username. (`{ErrorDetailCode.InvalidUsername}`)",
+            **ERROR_RESPONSE,
+        },
+        401: {
+            "description": f"Not logged in or password incorrect. (`{ErrorDetailCode.NotLoggedIn}`, `{ErrorDetailCode.SessionExpired}`, `{ErrorDetailCode.SessionInvalid}`, `{ErrorDetailCode.InvalidAccountDetails}`)",
+            **ERROR_RESPONSE,
+        },
+    },
+    tags=["Account"],
+)
 async def main(
     request: Request, body: ChangeUsernameBody, session: Session = get_session()
 ):

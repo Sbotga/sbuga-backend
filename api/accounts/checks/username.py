@@ -1,11 +1,32 @@
 from fastapi import APIRouter, Request, HTTPException, status
 from core import SbugaFastAPI
+from helpers.erroring import ErrorDetailCode, ERROR_RESPONSE
 import database as db
 
 router = APIRouter()
 
 
-@router.get("/{username}")
+@router.get(
+    "/{username}",
+    summary="Check username availability",
+    description="Returns account info if the username is taken, or `404` if it is available.",
+    responses={
+        200: {
+            "description": "Username is taken.",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "id": 1234567890,
+                        "username": "example",
+                        "display_name": "Example",
+                    }
+                }
+            },
+        },
+        404: {"description": "Username is available."},
+    },
+    tags=["Account"],
+)
 async def main(request: Request, username: str):
     app: SbugaFastAPI = request.app
 
