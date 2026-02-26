@@ -18,3 +18,8 @@ aioboto3
 UnityPy
 wannacri # NOTE: requires vgmstream
 ffmpeg-python # NOTE: requires ffmpeg
+
+# chart generation
+selenium
+numpy
+git+https://github.com/Sbotga/pjsekai-scores
