@@ -1,8 +1,31 @@
 from __future__ import annotations
 
-from rapidfuzz import fuzz, process as fuzz_process
-from helpers.fuzzy_matcher import preprocess
 from helpers.converter_maps import _song_maps, _character_map, _event_maps
+
+from helpers.fuzzy_matcher import fuzzy_match_multi
+
+
+def _fuzzy_match(
+    query: str,
+    mapping: dict,
+    sensitivity: float,
+    multi: bool,
+) -> list:
+    if not mapping:
+        return []
+
+    keys_result = fuzzy_match_multi(query, mapping, sensitivity=sensitivity, limit=10)
+
+    seen: set = set()
+    out = []
+    for key in keys_result:
+        val = mapping[key]
+        uid = val[0] if isinstance(val, tuple) else val
+        if uid not in seen:
+            seen.add(uid)
+            out.append(uid)
+
+    return out
 
 
 def match_difficulty(query: str) -> str | None:
@@ -21,40 +44,6 @@ def match_difficulty(query: str) -> str | None:
         "ez": "easy",
     }
     return diffs.get(query.lower().strip())
-
-
-def _fuzzy_match(
-    query: str,
-    mapping: dict,
-    sensitivity: float,
-    multi: bool,
-) -> list:
-    """Always returns a list. Caller decides whether to unwrap."""
-    if not mapping:
-        return []
-
-    query = preprocess(query)
-    keys = list(mapping.keys())
-
-    results = fuzz_process.extract(
-        query,
-        keys,
-        scorer=fuzz.WRatio,
-        processor=None,
-        limit=10,
-        score_cutoff=sensitivity * 100,
-    )
-
-    seen: set = set()
-    out = []
-    for match_key, score, _ in results:
-        val = mapping[match_key]
-        uid = val[0] if isinstance(val, tuple) else val
-        if uid not in seen:
-            seen.add(uid)
-            out.append(uid)
-
-    return out
 
 
 def _merge_maps(maps: list[dict]) -> dict:

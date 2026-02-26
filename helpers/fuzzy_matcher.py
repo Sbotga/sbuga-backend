@@ -97,3 +97,45 @@ def fuzzy_match_to_dict_key(
         return list(dictionary.keys())[matched_index]
 
     return None
+
+
+def fuzzy_match_multi(
+    input_str: str,
+    dictionary: dict,
+    sensitivity: float = 0.65,
+    limit: int = 10,
+) -> list[str]:
+    """
+    Fuzzy match input_str against dictionary keys, returning up to `limit` best matching keys
+    sorted by score descending. Uses token_set_ratio with Levenshtein penalty.
+
+    Args:
+        input_str (str): The string to match.
+        dictionary (dict): The dictionary to match against.
+        sensitivity (float): Minimum score threshold (0-1).
+        limit (int): Maximum number of results to return.
+
+    Returns:
+        list[str]: List of matching original keys sorted by score descending.
+    """
+    if not dictionary:
+        return []
+
+    sensitivity = sensitivity * 100
+    input_str = preprocess(input_str)
+    preprocessed_keys = {key: preprocess(key) for key in dictionary.keys()}
+
+    scores: list[tuple[str, float]] = []
+
+    for original_key, preprocessed_key in preprocessed_keys.items():
+        similarity = fuzz.token_set_ratio(input_str, preprocessed_key)
+        edit_distance = Levenshtein.distance(input_str, preprocessed_key)
+
+        if edit_distance > 5:
+            similarity -= (edit_distance - 5) * 5
+
+        if similarity >= sensitivity:
+            scores.append((original_key, similarity))
+
+    scores.sort(key=lambda x: x[1], reverse=True)
+    return [key for key, _ in scores[:limit]]
