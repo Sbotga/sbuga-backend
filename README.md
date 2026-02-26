@@ -12,6 +12,7 @@ Backend API for [sbuga.com](https://sbuga.com), a **WIP** website for minigames,
 | Cloudflare R2 | Asset storage |
 | ffmpeg | Audio file converter |
 | vgmstream | Decode .usm files |
+| ChromeDriver + Selenium | SVG to PNG |
 
 ## Credits
 
@@ -25,7 +26,7 @@ Parts of this project, located under `pjsk_api/`, are hidden from the public as 
 1. Get a copy of the hidden code...
 2. Fill out the config accordingly (setting up any external services as required).
 3. Install all requirements into a virtual environment.
-4. Install vgmstream and ffmpeg to path.
+4. Install vgmstream, ffmpeg, and ChromeDriver to path.
 5. SBUGA!
 
 ### vgmstream & ffmpeg

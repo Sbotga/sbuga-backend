@@ -3,9 +3,11 @@ from threading import Lock
 from io import BytesIO
 
 from PIL import Image
-from selenium import webdriver
-from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.webdriver import WebDriver
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.remote.client_config import ClientConfig
+from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
@@ -30,7 +32,9 @@ def get_browser():
                 pass
             browser = None
 
-    options = webdriver.ChromeOptions()
+    config = ClientConfig(timeout=600)
+
+    options = Options()
     options.add_argument("--headless=new")
     options.add_argument("--hide-scrollbars")
     options.add_argument("--no-sandbox")
@@ -54,10 +58,9 @@ def get_browser():
     else:
         service = Service(preexec_fn=os.setsid)
 
-    browser = webdriver.Chrome(service=service, options=options)
+    browser = WebDriver(service=service, options=options, client_config=config)
     browser.set_script_timeout(600)
     browser.set_page_load_timeout(600)
-    browser.command_executor.set_timeout(600)
     return browser
 
 
