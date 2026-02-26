@@ -49,6 +49,12 @@ sudo apt install ./google-chrome-stable_current_amd64.deb
 sudo apt install chromium-chromedriver
 ```
 
+### Unidic (770mb)
+RUN THIS AFTER INSTALLING REQUIREMENTS
+```bash
+python -m unidic download
+```
+
 ## License
 
 This project is licensed under the [MIT License](LICENSE).

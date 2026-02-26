@@ -23,3 +23,8 @@ ffmpeg-python # NOTE: requires ffmpeg
 selenium
 numpy
 git+https://github.com/Sbotga/pjsekai-scores
+
+# matching user input
+cutlet
+unidic
+rapidfuzz

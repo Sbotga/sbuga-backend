@@ -52,7 +52,7 @@ async def get_stamps(
     if not client:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=ErrorDetailCode.InternalServerError.value,
+            detail=ErrorDetailCode.PJSKClientUnavailable.value,
         )
 
     stamps_data: list = await client.get_master("stamps")

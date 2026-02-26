@@ -105,7 +105,7 @@ async def get_chart(
     if not client:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=ErrorDetailCode.InternalServerError.value,
+            detail=ErrorDetailCode.PJSKClientUnavailable.value,
         )
 
     padded_id = str(music_id).zfill(4)

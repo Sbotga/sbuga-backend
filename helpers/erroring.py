@@ -24,7 +24,9 @@ class ErrorDetailCode(StrEnum):
     FileTooLarge = "file_too_large"
     InvalidImage = "invalid_image"
     Forbidden = "forbidden"
+
     PJSKMaintainence = "maintainence_pjsk"
+    PJSKClientUnavailable = "pjsk_region_unavailable"
 
 
 # openapi
@@ -53,7 +55,7 @@ COMMON_RESPONSES = {
         **ERROR_RESPONSE,
     },
     503: {
-        "description": f"PJSK requesting unavailable or in maintenance. (`{ErrorDetailCode.InternalServerError}`, `{ErrorDetailCode.PJSKMaintainence}`)",
+        "description": f"PJSK requesting unavailable or in maintenance. (`{ErrorDetailCode.PJSKMaintainence}`, `{ErrorDetailCode.PJSKClientUnavailable}`)",
         **ERROR_RESPONSE,
     },
 }

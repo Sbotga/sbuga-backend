@@ -23,6 +23,20 @@ from pjsk_api.requests.ensure_updated_assetinfo import ensure_updated_assetinfo
 from pjsk_api.asset_handlers import download_and_process_assets
 from pjsk_api.requests.request_handling import request_with_retry
 from pjsk_api.app_ver_hash import get_en, get_jp
+from helpers.converter_maps import rebuild_maps
+
+_error_detail_values = {e.value for e in ErrorDetailCode}
+_clients_ready = 0
+_clients_ready_lock = asyncio.Lock()
+
+
+def _extract_detail(exc_detail) -> tuple[str, dict | None]:
+    """Returns (detail_code, cached_data | None)"""
+    if isinstance(exc_detail, dict):
+        return exc_detail.get(
+            "detail", ErrorDetailCode.InternalServerError.value
+        ), exc_detail.get("cached_data")
+    return exc_detail, None
 
 
 class SbugaFastAPI(FastAPI):
@@ -91,6 +105,18 @@ class SbugaFastAPI(FastAPI):
         asyncio.create_task(self._set_en_pjsk_client())
         asyncio.create_task(self._set_jp_pjsk_client())
 
+    async def _client_ready(self):
+        global _clients_ready
+        async with _clients_ready_lock:
+            _clients_ready += 1
+            if _clients_ready == 2:
+                asyncio.create_task(
+                    rebuild_maps(
+                        self.pjsk_clients["jp"],
+                        self.pjsk_clients["en"],
+                    )
+                )
+
     async def _set_en_pjsk_client(self):
         data = await get_en()
         client = PJSKClient(
@@ -102,6 +128,7 @@ class SbugaFastAPI(FastAPI):
         await ensure_updated_assetinfo(client)
         asyncio.create_task(download_and_process_assets(client))
         await set_client("en", client)
+        await self._client_ready()
 
     async def _set_jp_pjsk_client(self):
         data = await get_jp()
@@ -114,9 +141,14 @@ class SbugaFastAPI(FastAPI):
         await ensure_updated_assetinfo(client)
         asyncio.create_task(download_and_process_assets(client))
         await set_client("jp", client)
+        await self._client_ready()
 
-    async def pjsk_request(self, region: str, request: RequestData[T]) -> Optional[T]:
-        return await request_with_retry(self.pjsk_clients[region], request, set_client)
+    async def pjsk_request(
+        self, region: str, request: RequestData[T], cached_data: Optional[dict] = None
+    ) -> Optional[T]:
+        return await request_with_retry(
+            self.pjsk_clients[region], request, cached_data=cached_data
+        )
 
     @asynccontextmanager
     async def acquire_db(self) -> AsyncGenerator[DBConnWrapper, None]:
@@ -131,18 +163,28 @@ class SbugaFastAPI(FastAPI):
         )
 
     async def http_exception_handler(self, request: Request, exc: HTTPException):
+        detail, cached_data = _extract_detail(exc.detail)
+
         if exc.status_code < 500:
-            detail = exc.detail
-            if exc.status_code == 404 and exc.detail == "Not Found":
+            if exc.status_code == 404 and detail == "Not Found":
                 detail = ErrorDetailCode.NotFound.value
-            return JSONResponse(content={"detail": detail}, status_code=exc.status_code)
+            content = {"detail": detail}
+            if cached_data is not None:
+                content["cached_data"] = cached_data
+            return JSONResponse(content=content, status_code=exc.status_code)
         else:
             if self.debug:
                 raise exc
-            return JSONResponse(
-                content={"detail": ErrorDetailCode.InternalServerError.value},
-                status_code=exc.status_code,
-            )
+            content = {
+                "detail": (
+                    detail
+                    if detail in _error_detail_values
+                    else ErrorDetailCode.InternalServerError.value
+                )
+            }
+            if cached_data is not None:
+                content["cached_data"] = cached_data
+            return JSONResponse(content=content, status_code=exc.status_code)
 
     async def validation_exception_handler(
         self, request: Request, exc: RequestValidationError

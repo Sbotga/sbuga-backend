@@ -27,7 +27,7 @@ async def get_asset(request: Request, region: Literal["en", "jp"], asset_path: s
     if not client:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=ErrorDetailCode.InternalServerError.value,
+            detail=ErrorDetailCode.PJSKClientUnavailable.value,
         )
 
     file_path = client.data_path / "assets" / asset_path

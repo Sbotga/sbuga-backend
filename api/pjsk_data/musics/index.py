@@ -1,10 +1,21 @@
 from fastapi import APIRouter, Request, HTTPException, status
 from core import SbugaFastAPI
-from helpers.erroring import ErrorDetailCode, ERROR_RESPONSE, COMMON_RESPONSES
 from typing import Literal
 import asyncio
+from pydantic import BaseModel
+
+from helpers.erroring import ErrorDetailCode, ERROR_RESPONSE, COMMON_RESPONSES
+from helpers.converters import match_song
 
 router = APIRouter()
+
+
+class MusicSearchBody(BaseModel):
+    query: str
+    region: Literal["en", "jp"] | None = None
+    difficulties: (
+        list[Literal["easy", "normal", "hard", "expert", "master", "append"]] | None
+    ) = None
 
 
 def _build_music(
@@ -168,7 +179,7 @@ async def get_musics_simple(
     if not client:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=ErrorDetailCode.InternalServerError.value,
+            detail=ErrorDetailCode.PJSKClientUnavailable.value,
         )
 
     musics, difficulties = await asyncio.gather(
@@ -268,7 +279,7 @@ async def get_musics(
     if not client:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=ErrorDetailCode.InternalServerError.value,
+            detail=ErrorDetailCode.PJSKClientUnavailable.value,
         )
 
     (
@@ -312,3 +323,42 @@ async def get_musics(
     ]
 
     return {"musics": result}
+
+
+@router.post(
+    "/search",
+    summary="Search musics",
+    description=(
+        "Fuzzy search musics by title. Returns a list of matching music IDs sorted by relevance (closest first). "
+        "`region` is optional — if omitted, searches across all regions. "
+        "`difficulties` optionally filters to only songs that have ALL specified difficulties."
+    ),
+    responses={
+        200: {
+            "description": "Success",
+            "content": {"application/json": {"example": {"ids": [1, 5, 23]}}},
+        },
+        503: COMMON_RESPONSES[503],
+    },
+    tags=["PJSK Data"],
+)
+async def search_musics(
+    request: Request,
+    body: MusicSearchBody,
+):
+    app: SbugaFastAPI = request.app
+
+    if body.region and not app.pjsk_clients.get(body.region):
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=ErrorDetailCode.PJSKClientUnavailable.value,
+        )
+
+    results = match_song(
+        query=body.query,
+        region=body.region,
+        multi=True,
+        difficulties=body.difficulties,
+    )
+
+    return {"ids": results}

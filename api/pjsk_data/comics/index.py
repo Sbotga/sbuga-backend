@@ -51,7 +51,7 @@ async def get_comics(
     if not client:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=ErrorDetailCode.InternalServerError.value,
+            detail=ErrorDetailCode.PJSKClientUnavailable.value,
         )
 
     tips: list = await client.get_master("tips")
