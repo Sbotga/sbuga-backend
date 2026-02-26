@@ -34,6 +34,7 @@ Some download instructions for Ubuntu/Debian can be found below.
 ### G++ compiler
 ```bash
 sudo apt install g++
+sudo apt install python3-dev # mojimoji building (dependency of cutlet)
 ```
 
 ### vgmstream & ffmpeg
