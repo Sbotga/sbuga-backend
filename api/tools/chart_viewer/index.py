@@ -109,12 +109,17 @@ async def get_chart(
         )
 
     padded_id = str(music_id).zfill(4)
-    padded_id_3 = str(music_id).zfill(3)
+    musics = await client.get_master("musics")
+    music = next((m for m in musics if m["id"] == music_id), None)
+    if not music:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=ErrorDetailCode.NotFound.value,
+        )
     jacket_path = str(
         app.base_url
-        + "/api/pjsk_data/assets/music/jacket"
-        + f"/jacket_s_{padded_id_3}"
-        + f"/jacket_s_{padded_id_3}.png?region={region}"
+        + "/api/pjsk_data/assets/music/jacket/"
+        + f"{music['assetbundleName']}/{music['assetbundleName']}.png?region={region}"
     )
     score_path = (
         client.data_path
