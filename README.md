@@ -25,13 +25,19 @@ Parts of this project, located under `pjsk_api/`, are hidden from the public as 
 ## Running this project
 1. Get a copy of the hidden code...
 2. Fill out the config accordingly (setting up any external services as required).
-3. Install all requirements into a virtual environment.
+3. Install all requirements into a virtual environment. (NOTE: NEEDS G++ COMPILER!)
 4. Install vgmstream, ffmpeg, and ChromeDriver to path.
 5. SBUGA!
 
+Some download instructions for Ubuntu/Debian can be found below.
+
+### G++ compiler
+```bash
+sudo apt install g++
+```
+
 ### vgmstream & ffmpeg
 ```bash
-# Ubuntu/Debian
 # vgmstream
 sudo apt install unzip -y
 wget https://github.com/vgmstream/vgmstream/releases/download/VERSION GOES HERE/vgmstream-linux-cli.zip
