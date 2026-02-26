@@ -10,6 +10,8 @@ Backend API for [sbuga.com](https://sbuga.com), a **WIP** website for minigames,
 | Nginx | Reverse proxy |
 | Cloudflare Turnstile | Bot protection |
 | Cloudflare R2 | Asset storage |
+| ffmpeg | Audio file converter |
+| vgmstream | Decode .usm files |
 
 ## Credits
 
@@ -18,6 +20,13 @@ Backend API for [sbuga.com](https://sbuga.com), a **WIP** website for minigames,
 
 ## Hidden Code
 Parts of this project, located under `pjsk_api/`, are hidden from the public as it contains sensitive code to interact with the official PJSK APIs. If you wish to get started on your own, check out sssekai (credited above).
+
+## Running this project
+1. Get a copy of the hidden code...
+2. Fill out the config accordingly (setting up any external services as required).
+3. Install all requirements into a virtual environment.
+4. Install vgmstream and ffmpeg to path.
+5. SBUGA!
 
 ## License
 

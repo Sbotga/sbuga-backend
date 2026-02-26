@@ -13,3 +13,8 @@ packaging
 aiofiles
 aiohttp
 aioboto3
+
+# bundle extraction stuff
+UnityPy
+wannacri # NOTE: requires vgmstream
+ffmpeg-python # NOTE: requires ffmpeg
