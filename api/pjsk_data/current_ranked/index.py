@@ -42,7 +42,7 @@ def get_current_season(seasons: list) -> dict | None:
     description=(
         "Returns the current PJSK ranked season data including the top 100 leaderboard. "
         "`season_status` is one of `going` or `end`. "
-        "Data is cached for **5 minutes** — `next_available_update` indicates when fresh data will be available. "
+        "Data is cached for **5 minutes** - `next_available_update` indicates when fresh data will be available. "
         "If there is no active season, `season_id` will be `null` and no leaderboard data is returned."
     ),
     responses={

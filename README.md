@@ -28,6 +28,19 @@ Parts of this project, located under `pjsk_api/`, are hidden from the public as 
 4. Install vgmstream and ffmpeg to path.
 5. SBUGA!
 
+### vgmstream & ffmpeg
+```bash
+# Ubuntu/Debian
+# vgmstream
+sudo apt install unzip -y
+wget https://github.com/vgmstream/vgmstream/releases/download/VERSION GOES HERE/vgmstream-linux-cli.zip
+unzip vgmstream-linux-cli.zip -d vgmstream
+sudo mv vgmstream /usr/local/lib/vgmstream
+sudo ln -s /usr/local/lib/vgmstream/vgmstream-cli /usr/local/bin/vgmstream-cli
+# ffmpeg
+sudo apt install ffmpeg -y
+```
+
 ## License
 
 This project is licensed under the [MIT License](LICENSE).

@@ -40,7 +40,7 @@ def get_current_event(events: list) -> dict | None:
     description=(
         "Returns the current PJSK event data including the top 100 leaderboard and ranking borders. "
         "`event_status` is one of `going`, `counting`, or `end`. "
-        "Data is cached for **5 minutes** — `next_available_update` indicates when fresh data will be available. "
+        "Data is cached for **5 minutes** - `next_available_update` indicates when fresh data will be available. "
         "If there is no active event, `event_id` will be `null` and no leaderboard or border data is returned."
     ),
     responses={
