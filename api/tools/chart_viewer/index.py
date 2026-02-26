@@ -52,7 +52,7 @@ def _generate_png_subprocess(svg_path: Path, png_path: Path) -> None:
     kwargs = dict(
         stdin=subprocess.DEVNULL,
         stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
+        stderr=None,
         close_fds=True,
     )
 
