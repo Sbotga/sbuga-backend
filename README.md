@@ -41,6 +41,13 @@ sudo ln -s /usr/local/lib/vgmstream/vgmstream-cli /usr/local/bin/vgmstream-cli
 sudo apt install ffmpeg -y
 ```
 
+### Chromedriver
+```bash
+wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+sudo apt install ./google-chrome-stable_current_amd64.deb
+sudo apt install chromium-chromedriver
+```
+
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
