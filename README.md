@@ -23,11 +23,12 @@ Backend API for [sbuga.com](https://sbuga.com), a **WIP** website for minigames,
 Parts of this project, located under `pjsk_api/`, are hidden from the public as it contains sensitive code to interact with the official PJSK APIs. If you wish to get started on your own, check out sssekai (credited above).
 
 ## Running this project
-1. Get a copy of the hidden code...
-2. Fill out the config accordingly (setting up any external services as required).
-3. Install all requirements into a virtual environment. (NOTE: NEEDS G++ COMPILER!)
-4. Install vgmstream, ffmpeg, and ChromeDriver to path.
-5. SBUGA!
+1. Acquire at least ~70-80gb of free space
+2. Get a copy of the hidden code...
+3. Fill out the config accordingly (setting up any external services as required).
+4. Install all requirements into a virtual environment. (NOTE: NEEDS G++ COMPILER!)
+5. Install vgmstream, ffmpeg, and ChromeDriver to path.
+6. SBUGA!
 
 Some download instructions for Ubuntu/Debian can be found below.
 
