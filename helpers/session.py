@@ -67,7 +67,7 @@ def decode_session(token: str, app: SbugaFastAPI) -> SessionData:
 
 
 def _get_secret(app: SbugaFastAPI) -> str:
-    return app.config["jwt"]["secret"]
+    return app.config.jwt.secret
 
 
 def get_session(

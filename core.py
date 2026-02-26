@@ -3,7 +3,7 @@ from fastapi import FastAPI, Request
 from fastapi import status, HTTPException
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
-from helpers.config_loader import ConfigType
+from helpers.config_loader import Config
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
 from database import DBConnWrapper
@@ -26,10 +26,10 @@ from pjsk_api.app_ver_hash import get_en, get_jp
 
 
 class SbugaFastAPI(FastAPI):
-    def __init__(self, config: ConfigType, *args, **kwargs):
+    def __init__(self, config: Config, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.config: ConfigType = config
-        self.debug: bool = config["server"].get("debug", False)
+        self.config: Config = config
+        self.debug: bool = config.server.debug
 
         self.executor: ThreadPoolExecutor = ThreadPoolExecutor(max_workers=16)
         self.db: asyncpg.Pool | None = None
@@ -52,29 +52,39 @@ class SbugaFastAPI(FastAPI):
         self.add_exception_handler(HTTPException, self.http_exception_handler)
         self.add_exception_handler(404, self.http_exception_handler)
 
+    @property
+    def base_url(self) -> str:
+        scheme = "http://" if self.config.server.environment == "local" else "https://"
+        domain = (
+            f"127.0.0.1:{self.config.server.port}"
+            if self.config.server.environment == "local"
+            else self.config.server.domain
+        )
+        return scheme + domain
+
     async def init(self) -> None:
         """Initialize all resources after worker process starts."""
         self.s3_session = aioboto3.Session(
-            aws_access_key_id=self.config["s3"]["access-key-id"],
-            aws_secret_access_key=self.config["s3"]["secret-access-key"],
-            region_name=self.config["s3"]["location"],
+            aws_access_key_id=self.config.s3.access_key_id,
+            aws_secret_access_key=self.config.s3.secret_access_key,
+            region_name=self.config.s3.location,
         )
         self.s3_session_getter = lambda: self.s3_session.resource(
             service_name="s3",
-            endpoint_url=self.config["s3"]["endpoint"],
+            endpoint_url=self.config.s3.endpoint,
         )
-        self.s3_bucket = self.config["s3"]["bucket-name"]
-        self.s3_asset_base_url = self.config["s3"]["base-url"]
+        self.s3_bucket = self.config.s3.bucket_name
+        self.s3_asset_base_url = self.config.s3.base_url
 
-        psql_config = self.config["psql"]
+        psql_config = self.config.psql
         self.db = await asyncpg.create_pool(
-            host=psql_config["host"],
-            user=psql_config["user"],
-            database=psql_config["database"],
-            password=psql_config["password"],
-            port=psql_config["port"],
-            min_size=psql_config["pool-min-size"],
-            max_size=psql_config["pool-max-size"],
+            host=psql_config.host,
+            user=psql_config.user,
+            database=psql_config.database,
+            password=psql_config.password,
+            port=psql_config.port,
+            min_size=psql_config.pool_min_size,
+            max_size=psql_config.pool_max_size,
             ssl="disable",  # XXX: todo, lazy for now
         )
 

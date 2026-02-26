@@ -9,7 +9,7 @@ from helpers.config_loader import get_config
 from core import SbugaFastAPI
 
 config = get_config()
-debug = config.get("server", {}).get("debug")
+debug = config.server.debug
 
 if debug:
     app = SbugaFastAPI(
@@ -42,9 +42,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-# if not debug:
-#     domain = urlparse(config["server"]["base-url"]).netloc
-#     app.add_middleware(TrustedHostMiddleware, allowed_hosts=[domain, "127.0.0.1"])
+if config.server.environment == "production":
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=[config.server.domain])
 
 
 @app.middleware("http")
@@ -60,18 +59,8 @@ async def force_https_redirect(request, call_next):
     return response
 
 
-# app.mount("/static", StaticFiles(directory="static"), name="static")
-# templates = Jinja2Templates(directory="templates")
-
-
-import os
-import shutil
-import importlib
-
-
 def load_routes(folder, cleanup: bool = True):
     global app
-    """Load Routes from the specified directory."""
 
     routes = []
 
@@ -85,16 +74,13 @@ def load_routes(folder, cleanup: bool = True):
                         .replace("\\", "/")
                         .replace("/", ".")
                     )
-
-                    # Check if the route is dynamic or static
                     if "{" in route_name and "}" in route_name:
-                        routes.append((route_name, False))  # Dynamic route
+                        routes.append((route_name, False))
                     else:
-                        routes.append((route_name, True))  # Static route
+                        routes.append((route_name, True))
 
     traverse_directory(folder)
 
-    # static first, then dynamic. Deeper routes first.
     routes.sort(key=lambda x: (not x[1], x[0]))
 
     for route_name, is_static in routes:
@@ -103,10 +89,8 @@ def load_routes(folder, cleanup: bool = True):
         except NotImplementedError:
             continue
 
-        # route_version = route_name.split(".")[0]
         route_name_parts = route_name.split(".")
 
-        # it's the index for the route
         if route_name.endswith(".index"):
             del route_name_parts[-1]
 
@@ -119,11 +103,12 @@ def load_routes(folder, cleanup: bool = True):
 
         print(f"[API] Loaded Route {route_name}")
 
-    # Cleanup after loading
     if cleanup:
         for root, dirs, _ in os.walk(folder, topdown=False):
             if "__pycache__" in dirs:
                 pycache_path = os.path.join(root, "__pycache__")
+                import shutil
+
                 shutil.rmtree(pycache_path, ignore_errors=True)
                 print(f"[API] Removed __pycache__ at {pycache_path}")
 
@@ -142,14 +127,14 @@ app.add_event_handler("startup", startup_event)
 
 
 async def start_fastapi():
-    config_server = uvicorn.Config(
+    uvicorn_config = uvicorn.Config(
         "app:app",
         host="0.0.0.0",
-        port=config["server"]["port"],
+        port=config.server.port,
         workers=8,
         access_log=debug,
     )
-    server = uvicorn.Server(config_server)
+    server = uvicorn.Server(uvicorn_config)
     await server.serve()
 
 

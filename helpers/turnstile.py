@@ -17,7 +17,7 @@ async def verify_turnstile(
     idempotency_key = str(uuid.uuid4())
 
     data = {
-        "secret": app.config["cloudflare-turnstile"]["secret-key"],
+        "secret": app.config.cloudflare_turnstile.secret_key,
         "response": turnstile_response,
         "idempotency_key": idempotency_key,
     }

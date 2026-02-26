@@ -1,6 +1,8 @@
 server:
   port: 8000
   debug: false
+  environment: "local, production"
+  domain: "your domain"
 psql:
   host: "..."
   user: "..."
