@@ -372,21 +372,22 @@ async def search_musics(
                 music_id
                 for music in musics
                 if music["id"] in result_set
-                and not app.check_leak(body.region, music["publishedAt"])
+                and not app.check_leak(music["publishedAt"])
                 for music_id in [music["id"]]
             ]
         else:
             result_set = set(results)
-            filtered = list(result_set)
+            leaked = set(result_set)
             for region, client in app.pjsk_clients.items():
                 musics = await client.get_master("musics")
-                leaked = {
+                not_leaked_in_region = {
                     music["id"]
                     for music in musics
-                    if music["id"] in filtered
-                    and app.check_leak(region, music["publishedAt"])
+                    if music["id"] in result_set
+                    and not app.check_leak(music["publishedAt"])
                 }
-                filtered = [mid for mid in filtered if mid not in leaked]
+                leaked -= not_leaked_in_region
+            filtered = [mid for mid in results if mid not in leaked]
     else:
         filtered = results
 
