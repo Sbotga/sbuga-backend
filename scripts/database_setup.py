@@ -49,7 +49,36 @@ async def main():
             valid_session_uuid TEXT NOT NULL DEFAULT gen_random_uuid()::TEXT,
             PRIMARY KEY (id)
         );
+        """,
         """
+        CREATE TABLE IF NOT EXISTS song_aliases (
+            id SERIAL PRIMARY KEY,
+            alias TEXT NOT NULL UNIQUE,
+            music_id INTEGER NOT NULL,
+            region TEXT,
+            created_at TIMESTAMP DEFAULT NOW(),
+            created_by INTEGER REFERENCES account(id) ON DELETE SET NULL
+        );
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS event_aliases (
+            id SERIAL PRIMARY KEY,
+            alias TEXT NOT NULL UNIQUE,
+            event_id INTEGER NOT NULL,
+            region TEXT,
+            created_at TIMESTAMP DEFAULT NOW(),
+            created_by INTEGER REFERENCES account(id) ON DELETE SET NULL
+        );
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS account_permissions (
+            id SERIAL PRIMARY KEY,
+            account_id INTEGER NOT NULL REFERENCES account(id) ON DELETE CASCADE,
+            permission TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT NOW(),
+            UNIQUE (account_id, permission)
+        );
+        """,
     ]
     async with db.acquire() as connection:
         for query in queries:

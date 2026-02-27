@@ -111,16 +111,13 @@ class SbugaFastAPI(FastAPI):
             _clients_ready += 1
             if _clients_ready == 2:
                 asyncio.create_task(
-                    rebuild_maps(
-                        self.pjsk_clients["jp"],
-                        self.pjsk_clients["en"],
-                    )
+                    rebuild_maps(self.pjsk_clients["jp"], self.pjsk_clients["en"], self)
                 )
 
     async def _set_en_pjsk_client(self):
         data = await get_en()
         client = PJSKClient(
-            "en", app_version=data["app_version"], app_hash=data["app_hash"]
+            self, "en", app_version=data["app_version"], app_hash=data["app_hash"]
         )
         await client.start()
         await authenticate_client(client)
@@ -133,7 +130,7 @@ class SbugaFastAPI(FastAPI):
     async def _set_jp_pjsk_client(self):
         data = await get_jp()
         client = PJSKClient(
-            "jp", app_version=data["app_version"], app_hash=data["app_hash"]
+            self, "jp", app_version=data["app_version"], app_hash=data["app_hash"]
         )
         await client.start()
         await authenticate_client(client)
@@ -147,7 +144,7 @@ class SbugaFastAPI(FastAPI):
         self, region: str, request: RequestData[T], cached_data: Optional[dict] = None
     ) -> Optional[T]:
         return await request_with_retry(
-            self.pjsk_clients[region], request, cached_data=cached_data
+            self.pjsk_clients[region], request, cached_data=cached_data, app=self
         )
 
     @asynccontextmanager

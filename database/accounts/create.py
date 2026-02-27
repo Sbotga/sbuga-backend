@@ -14,3 +14,15 @@ def create_account(
         username,
         salted_password,
     )
+
+
+def add_permission(account_id: int, permission: str) -> ExecutableQuery:
+    return ExecutableQuery(
+        """
+        INSERT INTO account_permissions (account_id, permission)
+        VALUES ($1, $2)
+        ON CONFLICT (account_id, permission) DO NOTHING
+        """,
+        account_id,
+        permission,
+    )

@@ -3,8 +3,15 @@ from __future__ import annotations
 import asyncio
 import cutlet
 
+import database
+
 from helpers.fuzzy_matcher import preprocess
 from pjsk_api.client import PJSKClient
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from core import SbugaFastAPI
 
 _katsu = cutlet.Cutlet()
 _katsu_foreign = cutlet.Cutlet(ensure_ascii=False)
@@ -16,8 +23,20 @@ _event_maps: dict[str, dict[str, int]] = {"jp": {}, "en": {}}
 _build_lock = asyncio.Lock()
 
 
-def get_song_aliases() -> dict[str, int]:
-    return {}
+async def get_song_aliases(app: SbugaFastAPI) -> dict[str, int]:
+    async with app.acquire_db() as conn:
+        rows: list[database.models.SongAlias] = await conn.fetch(
+            database.aliases.get_song_aliases()
+        )
+    return {row.alias: row.music_id for row in rows}
+
+
+async def get_event_aliases(app: SbugaFastAPI) -> dict[str, int]:
+    async with app.acquire_db() as conn:
+        rows: list[database.models.EventAlias] = await conn.fetch(
+            database.aliases.get_event_aliases()
+        )
+    return {row.alias: row.event_id for row in rows}
 
 
 def _romaji(text: str) -> str | None:
@@ -79,12 +98,17 @@ def _plain_event_keys(event: dict) -> list[str]:
     return list(dict.fromkeys(keys))
 
 
-async def _build_song_maps(jp_client: PJSKClient, en_client: PJSKClient) -> None:
-    jp_musics, en_musics, jp_difficulties, en_difficulties = await asyncio.gather(
-        jp_client.get_master("musics"),
-        en_client.get_master("musics"),
-        jp_client.get_master("musicDifficulties"),
-        en_client.get_master("musicDifficulties"),
+async def _build_song_maps(
+    jp_client: PJSKClient, en_client: PJSKClient, app: SbugaFastAPI
+) -> None:
+    jp_musics, en_musics, jp_difficulties, en_difficulties, aliases = (
+        await asyncio.gather(
+            jp_client.get_master("musics"),
+            en_client.get_master("musics"),
+            jp_client.get_master("musicDifficulties"),
+            en_client.get_master("musicDifficulties"),
+            get_song_aliases(app),
+        )
     )
 
     jp_ids = {m["id"] for m in jp_musics}
@@ -99,7 +123,6 @@ async def _build_song_maps(jp_client: PJSKClient, en_client: PJSKClient) -> None
     jp_diff_map = _diff_map(jp_difficulties)
     en_diff_map = _diff_map(en_difficulties)
 
-    aliases = get_song_aliases()
     loop = asyncio.get_event_loop()
 
     jp_keys_list: list[list[str]] = await asyncio.gather(
@@ -140,10 +163,11 @@ async def _build_song_maps(jp_client: PJSKClient, en_client: PJSKClient) -> None
     _song_maps["en"] = new_en
 
 
-async def _build_event_map(jp_client: PJSKClient, en_client: PJSKClient) -> None:
-    jp_events, en_events = await asyncio.gather(
+async def _build_event_map(jp_client: PJSKClient, en_client: PJSKClient, app) -> None:
+    jp_events, en_events, aliases = await asyncio.gather(
         jp_client.get_master("events"),
         en_client.get_master("events"),
+        get_event_aliases(app),
     )
 
     jp_ids = {e["id"] for e in jp_events}
@@ -173,6 +197,14 @@ async def _build_event_map(jp_client: PJSKClient, en_client: PJSKClient) -> None
             new_en[key] = event_id
             if event_id in jp_ids:
                 new_jp[key] = event_id
+
+    # Aliases
+    for alias, event_id in aliases.items():
+        key = preprocess(alias)
+        if event_id in jp_ids:
+            new_jp[key] = event_id
+        if event_id in en_ids:
+            new_en[key] = event_id
 
     _event_maps["jp"] = new_jp
     _event_maps["en"] = new_en
@@ -224,16 +256,18 @@ async def _build_character_map(jp_client: PJSKClient) -> None:
     _character_map.update(new_map)
 
 
-async def rebuild_maps(jp_client: PJSKClient, en_client: PJSKClient) -> None:
+async def rebuild_maps(
+    jp_client: PJSKClient, en_client: PJSKClient, app: SbugaFastAPI
+) -> None:
     async with _build_lock:
         await asyncio.gather(
-            _build_song_maps(jp_client, en_client),
-            _build_event_map(jp_client, en_client),
+            _build_song_maps(jp_client, en_client, app),
+            _build_event_map(jp_client, en_client, app),
             _build_character_map(jp_client),
         )
 
 
-# add new aliases without rebuilding entire maps
+# add/remove new aliases without rebuilding entire maps
 def add_song_alias(
     alias: str,
     music_id: int,
@@ -260,3 +294,23 @@ def add_event_alias(
     for r in regions:
         mapping = _event_maps.get(r, {})
         mapping[key] = event_id
+
+
+def remove_song_alias(
+    alias: str,
+    region: str | None = None,
+) -> None:
+    key = preprocess(alias)
+    regions = [region] if region else list(_song_maps.keys())
+    for r in regions:
+        _song_maps.get(r, {}).pop(key, None)
+
+
+def remove_event_alias(
+    alias: str,
+    region: str | None = None,
+) -> None:
+    key = preprocess(alias)
+    regions = [region] if region else list(_event_maps.keys())
+    for r in regions:
+        _event_maps.get(r, {}).pop(key, None)

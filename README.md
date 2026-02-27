@@ -28,7 +28,8 @@ Parts of this project, located under `pjsk_api/`, are hidden from the public as 
 3. Fill out the config accordingly (setting up any external services as required).
 4. Install all requirements into a virtual environment. (NOTE: NEEDS G++ COMPILER!)
 5. Install vgmstream, ffmpeg, and ChromeDriver to path.
-6. SBUGA!
+6. Setup the database `python -m scripts.database_setup`
+7. SBUGA!
 
 Some download instructions for Ubuntu/Debian can be found below.
 

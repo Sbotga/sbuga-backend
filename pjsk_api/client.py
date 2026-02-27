@@ -1,3 +1,4 @@
+from __future__ import annotations
 import aiohttp
 import json
 import aiofiles
@@ -5,10 +6,13 @@ import asyncio
 from msgpack import unpackb, packb
 from pjsk_api.crypto import encrypt, decrypt
 from pjsk_api.constants import keys
-from typing import Any, Optional, Type, TypeVar, Generic
+from typing import Any, Optional, Type, TypeVar, Generic, TYPE_CHECKING
 from pydantic import BaseModel
 from pathlib import Path
 from .models import SekaiUserAuthData
+
+if TYPE_CHECKING:
+    from core import SbugaFastAPI
 
 APP_PLATFORM_NAMES = {
     "ios": "iOS",
@@ -47,6 +51,7 @@ class UserSlot:
 class PJSKClient:
     def __init__(
         self,
+        app: SbugaFastAPI,
         region: str,
         app_version: str,
         app_hash: str,
@@ -54,6 +59,8 @@ class PJSKClient:
         unity_version: str = "2022.3.21f1",
         num_users: int = 5,
     ):
+        self.app: SbugaFastAPI = app
+
         self.region = region
         self.app_version = app_version
         self.app_hash = app_hash

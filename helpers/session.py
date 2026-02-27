@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from fastapi import Header, HTTPException, status, Request, Depends
 from core import SbugaFastAPI
 from database import accounts
-from helpers.models import Account
+from database.models import Account
 from helpers.erroring import ErrorDetailCode
 
 
