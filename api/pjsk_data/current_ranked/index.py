@@ -30,7 +30,7 @@ def get_current_season(seasons: list) -> dict | None:
 
     for season in seasons:
         if season["startAt"] < now < season["closedAt"]:
-            return {"id": season["id"], "status": "going"}
+            return {"id": season["id"], "status": "going", "name": latest["name"]}
 
     if not seasons:
         return None
@@ -39,7 +39,7 @@ def get_current_season(seasons: list) -> dict | None:
         return None
 
     latest = seasons[-1]
-    return {"id": latest["id"], "status": "end"}
+    return {"id": latest["id"], "status": "end", "name": latest["name"]}
 
 
 async def _try_load_file_cache(region: str, cache_path: Path) -> None:
