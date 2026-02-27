@@ -85,6 +85,7 @@ async def _save_cache(data: dict, cache_path: Path) -> None:
                                 "next_available_update": 1700000300.0,
                                 "season_id": 123,
                                 "season_status": "going",
+                                "season_name": "Autmumn 2025",
                                 "top_100": {},
                             },
                         },
@@ -118,6 +119,7 @@ async def _save_cache(data: dict, cache_path: Path) -> None:
                                     "next_available_update": 1700000300.0,
                                     "season_id": 123,
                                     "season_status": "going",
+                                    "season_name": "Autumn 2025",
                                     "top_100": {},
                                 },
                             },
@@ -182,6 +184,7 @@ async def current_ranked(request: Request, region: Literal["en", "jp"]):
                 "next_available_update": updated + CACHE_TTL,
                 "season_id": season["id"],
                 "season_status": season["status"],
+                "season_name": season["name"],
                 "top_100": top_100,
             }
             cached[region] = data
