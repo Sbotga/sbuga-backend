@@ -30,7 +30,7 @@ def get_current_season(seasons: list) -> dict | None:
 
     for season in seasons:
         if season["startAt"] < now < season["closedAt"]:
-            return {"id": season["id"], "status": "going", "name": latest["name"]}
+            return {"id": season["id"], "status": "going", "name": season["name"]}
 
     if not seasons:
         return None
