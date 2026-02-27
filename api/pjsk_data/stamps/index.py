@@ -74,7 +74,6 @@ async def get_stamps(
             "name": stamp["name"],
             "character_ids": get_character_ids(stamp),
             "game_character_unit_id": stamp.get("gameCharacterUnitId"),
-            "published_at": stamp.get("archivePublishedAt"),
             "description": stamp.get("description"),
             "image_url": make_asset_url(
                 f"stamp/{stamp['assetbundleName']}/{stamp['assetbundleName']}.{image_type}"
@@ -84,7 +83,6 @@ async def get_stamps(
             ),
         }
         for stamp in stamps_data
-        if app.check_leak(stamp["archivePublishedAt"])
     ]
 
     return {"stamps": stamps}
