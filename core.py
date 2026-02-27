@@ -1,4 +1,4 @@
-import asyncio
+import asyncio, time
 from fastapi import FastAPI, Request
 from fastapi import status, HTTPException
 from fastapi.exceptions import RequestValidationError
@@ -75,6 +75,15 @@ class SbugaFastAPI(FastAPI):
             else self.config.server.domain
         )
         return scheme + domain
+
+    def check_leak(self, published_at: int) -> bool:
+        """
+        Returns True if leak (always False if not hide-leaks)
+        """
+        if self.config.pjsk.hide_leaks:
+            return published_at > time.time() * 1000
+        else:
+            return False
 
     async def init(self) -> None:
         """Initialize all resources after worker process starts."""

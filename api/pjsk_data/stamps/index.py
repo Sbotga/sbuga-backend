@@ -84,6 +84,7 @@ async def get_stamps(
             ),
         }
         for stamp in stamps_data
+        if app.check_leak(stamp["archivePublishedAt"])
     ]
 
     return {"stamps": stamps}

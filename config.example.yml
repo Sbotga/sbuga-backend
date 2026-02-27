@@ -3,6 +3,8 @@ server:
   debug: false
   environment: "local, production"
   domain: "your domain"
+pjsk:
+  hide-leaks: true
 psql:
   host: "..."
   user: "..."

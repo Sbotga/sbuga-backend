@@ -10,7 +10,11 @@ class ServerConfig(BaseModel):
     debug: bool
 
 
-class PsqlConfig(BaseModel):
+class PJSKConfig(BaseModel):
+    hide_leaks: bool = Field(alias="hide-leaks")
+
+
+class PSQLConfig(BaseModel):
     host: str
     user: str
     database: str
@@ -39,7 +43,8 @@ class S3Config(BaseModel):
 
 class Config(BaseModel):
     server: ServerConfig
-    psql: PsqlConfig
+    pjsk: PJSKConfig
+    psql: PSQLConfig
     cloudflare_turnstile: CloudflareTurnstileConfig = Field(
         alias="cloudflare-turnstile"
     )

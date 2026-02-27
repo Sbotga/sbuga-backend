@@ -121,7 +121,7 @@ def _build_music_simple(
     base_url: str,
     region: str,
     image_type: Literal["webp", "png"],
-) -> dict:
+) -> tuple[dict, int]:
     music_id = music["id"]
     ab_name = music["assetbundleName"]
     jacket_url = f"{base_url}/api/pjsk_data/assets/music/jacket/{ab_name}/{ab_name}.{image_type}?region={region}"
@@ -133,7 +133,7 @@ def _build_music_simple(
             d["musicDifficulty"] for d in difficulties if d["musicId"] == music_id
         ],
         "jacket_url": jacket_url,
-    }
+    }, music["publishedAt"]
 
 
 @router.get(
@@ -195,7 +195,8 @@ async def get_musics_simple(
             region=region,
             image_type=image_type,
         )
-        for music in musics
+        for music, pub_at in musics
+        if not app.check_leak(pub_at)
     ]
 
     return {"musics": result}
@@ -320,6 +321,7 @@ async def get_musics(
             image_type=image_type,
         )
         for music in musics
+        if not app.check_leak(music["published_at"])
     ]
 
     return {"musics": result}
@@ -361,4 +363,31 @@ async def search_musics(
         difficulties=body.difficulties,
     )
 
-    return {"ids": results}
+    if app.config.pjsk.hide_leaks:
+        if body.region:
+            client = app.pjsk_clients[body.region]
+            musics = await client.get_master("musics")
+            result_set = set(results)
+            filtered = [
+                music_id
+                for music in musics
+                if music["id"] in result_set
+                and not app.check_leak(body.region, music["publishedAt"])
+                for music_id in [music["id"]]
+            ]
+        else:
+            result_set = set(results)
+            filtered = list(result_set)
+            for region, client in app.pjsk_clients.items():
+                musics = await client.get_master("musics")
+                leaked = {
+                    music["id"]
+                    for music in musics
+                    if music["id"] in filtered
+                    and app.check_leak(region, music["publishedAt"])
+                }
+                filtered = [mid for mid in filtered if mid not in leaked]
+    else:
+        filtered = results
+
+    return {"ids": filtered}
