@@ -48,13 +48,10 @@ def match_difficulty(query: str) -> str | None:
 
 def _merge_maps(maps: list[dict]) -> dict:
     merged: dict[str, any] = {}
-    seen_ids: set[int] = set()
     for mapping in maps:
         for key, val in mapping.items():
-            uid = val[0] if isinstance(val, tuple) else val
-            if uid not in seen_ids:
+            if key not in merged:
                 merged[key] = val
-                seen_ids.add(uid)
     return merged
 
 

@@ -390,5 +390,4 @@ async def search_musics(
             filtered = [mid for mid in results if mid not in leaked]
     else:
         filtered = results
-
     return {"ids": filtered}
