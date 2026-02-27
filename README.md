@@ -10,6 +10,7 @@ Backend API for [sbuga.com](https://sbuga.com), a **WIP** website for minigames,
 | Nginx | Reverse proxy |
 | Cloudflare Turnstile | Bot protection |
 | Cloudflare R2 | Asset storage |
+| Resend | Email sending |
 | ffmpeg | Audio file converter |
 | vgmstream | Decode .usm files |
 | ChromeDriver + Selenium | SVG to PNG |

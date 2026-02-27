@@ -14,6 +14,9 @@ async def verify_turnstile(
     ip: Optional[str] = None,
     retries: int = 3,
 ) -> bool:
+    if app.config.server.environment != "production":
+        return True
+
     idempotency_key = str(uuid.uuid4())
 
     data = {

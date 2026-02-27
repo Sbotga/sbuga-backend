@@ -10,8 +10,12 @@ class ErrorDetailCode(StrEnum):
     InvalidUsername = "username_invalid"
     InvalidPassword = "password_invalid"
     InvalidDisplayName = "display_name_invalid"
+    InvalidEmail = "email_invalid"
     UsernameConflict = "username_taken"
+    EmailConflict = "email_taken"
     AccountNotFound = "account_not_found"
+    EmailUnverified = "email_not_verified"
+    EmailAlreadyVerified = "email_verified"
 
     InvalidAccountDetails = "invalid_login"
 

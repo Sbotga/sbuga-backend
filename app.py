@@ -8,8 +8,11 @@ from helpers.erroring import ERROR_RESPONSE, ErrorDetailCode
 from helpers.config_loader import get_config
 from core import SbugaFastAPI
 
+import resend
+
 config = get_config()
 debug = config.server.debug
+resend.api_key = config.resend.api_key
 
 if debug:
     app = SbugaFastAPI(

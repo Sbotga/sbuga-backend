@@ -15,6 +15,9 @@ class Account(BaseModel):
     updated_at: datetime
     banned: bool
     valid_session_uuid: str
+    email: str
+    base_email: str
+    email_verified: bool
 
     profile_hash: Optional[str]
     banner_hash: Optional[str]

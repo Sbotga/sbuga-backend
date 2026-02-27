@@ -22,6 +22,16 @@ def get_account_by_username(username: str) -> SelectQuery[Account]:
     )
 
 
+def get_account_by_base_email(base_email: str) -> SelectQuery[Account]:
+    return SelectQuery(
+        Account,
+        """
+        SELECT * FROM account WHERE base_email = $1;
+        """,
+        base_email,
+    )
+
+
 def get_permissions(account_id: int) -> SelectQuery[AccountPermission]:
     return SelectQuery(
         AccountPermission,
@@ -30,7 +40,7 @@ def get_permissions(account_id: int) -> SelectQuery[AccountPermission]:
     )
 
 
-def has_permission(account_id: int, permission: str) -> SelectQuery[AccountPermission]:
+def get_permission(account_id: int, permission: str) -> SelectQuery[AccountPermission]:
     return SelectQuery(
         AccountPermission,
         "SELECT * FROM account_permissions WHERE account_id = $1 AND permission = $2",

@@ -7,6 +7,7 @@ class ServerConfig(BaseModel):
     port: int
     environment: Literal["local", "production"]
     domain: str
+    frontend_domain: str
     debug: bool
 
 
@@ -41,6 +42,11 @@ class S3Config(BaseModel):
     location: str
 
 
+class EmailConfig(BaseModel):
+    api_key: str = Field(alias="api-key")
+    email_domain: str = Field(alias="email-domain")
+
+
 class Config(BaseModel):
     server: ServerConfig
     pjsk: PJSKConfig
@@ -50,6 +56,7 @@ class Config(BaseModel):
     )
     jwt: JWTConfig
     s3: S3Config
+    resend: EmailConfig
 
     model_config = {"populate_by_name": True}
 

@@ -10,6 +10,7 @@ import database as db
 import time, secrets
 
 from helpers.session import create_session
+from helpers import emails
 
 router = APIRouter()
 
@@ -17,12 +18,14 @@ router = APIRouter()
 class SignupBody(BaseModel):
     display_name: str
     username: str
+    email: str
     password: str
     turnstile_response: str
 
 
 USER_EXAMPLE = {
     "id": 1234567890,
+    "email": "dev@sbuga.com",
     "display_name": "Example",
     "username": "example",
     "created_at": 1700000000000,
@@ -58,12 +61,13 @@ USER_EXAMPLE = {
                 f"(`{ErrorDetailCode.InvalidTurnstile}`, "
                 f"`{ErrorDetailCode.InvalidUsername}`, "
                 f"`{ErrorDetailCode.InvalidPassword}`, "
-                f"`{ErrorDetailCode.InvalidDisplayName}`)"
+                f"`{ErrorDetailCode.InvalidDisplayName}`, "
+                f"`{ErrorDetailCode.InvalidEmail}`)"
             ),
             **ERROR_RESPONSE,
         },
         409: {
-            "description": f"Username already taken. (`{ErrorDetailCode.UsernameConflict}`)",
+            "description": f"Username or email already taken. (`{ErrorDetailCode.UsernameConflict}`, `{ErrorDetailCode.EmailConflict}`)",
             **ERROR_RESPONSE,
         },
         500: {
@@ -83,6 +87,11 @@ async def main(request: Request, body: SignupBody):
             detail=ErrorDetailCode.InvalidTurnstile.value,
         )
 
+    if not emails.check_email(body.email):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=ErrorDetailCode.InvalidEmail.value,
+        )
     if not string_checks.check_username(body.username):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -108,6 +117,14 @@ async def main(request: Request, body: SignupBody):
                 status_code=status.HTTP_409_CONFLICT,
                 detail=ErrorDetailCode.UsernameConflict.value,
             )
+        existing_email = await conn.fetchrow(
+            db.accounts.get_account_by_base_email(emails.get_base_email(body.email))
+        )
+        if existing_email:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=ErrorDetailCode.EmailConflict.value,
+            )
 
     now = time.time()
     now_ms = int(now * 1000)
@@ -121,7 +138,11 @@ async def main(request: Request, body: SignupBody):
     async with app.acquire_db() as conn:
         await conn.execute(
             db.accounts.create_account(
-                account_id, body.display_name, body.username, salted_password
+                account_id,
+                body.email,
+                body.display_name,
+                body.username,
+                salted_password,
             )
         )
         account = await conn.fetchrow(db.accounts.get_account_by_id(account_id))
@@ -132,6 +153,7 @@ async def main(request: Request, body: SignupBody):
     return {
         "user": {
             "id": account.id,
+            "email": account.email,
             "display_name": account.display_name,
             "username": account.username,
             "created_at": now_ms,

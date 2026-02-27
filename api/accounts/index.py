@@ -94,6 +94,8 @@ async def _upload_s3(app: SbugaFastAPI, png_bytes: bytes, webp_bytes: bytes, pat
                     "example": {
                         "user": {
                             "id": 1234567890,
+                            "email": "dev@sbuga.com",
+                            "email_verified": True,
                             "display_name": "Example",
                             "username": "example",
                             "created_at": 1700000000000,
@@ -120,6 +122,8 @@ async def get_self(request: Request, session: Session = get_session()):
         "user": {
             "id": account.id,
             "display_name": account.display_name,
+            "email": account.email,
+            "email_verified": account.email_verified,
             "username": account.username,
             "created_at": int(account.created_at.timestamp() * 1000),
             "updated_at": int(account.updated_at.timestamp() * 1000),

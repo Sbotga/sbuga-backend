@@ -3,6 +3,7 @@ server:
   debug: false
   environment: "local, production"
   domain: "your domain"
+  frontend_domain: "your frontend domain (even if it's the same as domain)"
 pjsk:
   hide-leaks: true
 psql:
@@ -24,3 +25,6 @@ s3:
   access-key-id: "..."
   secret-access-key: "..."
   location: "auto" # note: auto is for R2 cloudflare only.
+resend: # uses resend.com
+  api-key: "your resend api key goes here"
+  email-domain: "specific email sending domain/subdomain"

@@ -1,14 +1,17 @@
 from database.query import ExecutableQuery
+from helpers.emails import get_base_email
 
 
 def create_account(
-    account_id: int, display_name: str, username: str, salted_password: str
+    account_id: int, email: str, display_name: str, username: str, salted_password: str
 ) -> ExecutableQuery:
     return ExecutableQuery(
         """
-        INSERT INTO account (id, display_name, username, salted_password)
+        INSERT INTO account (id, email, base_email, display_name, username, salted_password)
         VALUES ($1, $2, $3, $4);
         """,
+        email,
+        get_base_email(email),
         account_id,
         display_name,
         username,

@@ -62,3 +62,17 @@ def update_banner_hash(account_id: int, banner_hash: Optional[str]) -> Executabl
         banner_hash,
         account_id,
     )
+
+
+def set_email_verified(account_id: int) -> ExecutableQuery:
+    return ExecutableQuery(
+        "UPDATE account SET email_verified = TRUE, updated_at = NOW() WHERE id = $1",
+        account_id,
+    )
+
+
+def rotate_session_uuid(account_id: int) -> ExecutableQuery:
+    return ExecutableQuery(
+        "UPDATE account SET valid_session_uuid = gen_random_uuid()::TEXT, updated_at = NOW() WHERE id = $1",
+        account_id,
+    )

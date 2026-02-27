@@ -40,6 +40,8 @@ async def main():
             display_name TEXT NOT NULL,
             username VARCHAR(255) NOT NULL UNIQUE,
             salted_password VARCHAR(255) NOT NULL,
+            email TEXT NOT NULL,
+            base_email TEXT NOT NULL,
             created_at TIMESTAMP NOT NULL DEFAULT NOW(),
             updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
             banned BOOLEAN NOT NULL DEFAULT false,
@@ -47,6 +49,7 @@ async def main():
             profile_hash TEXT DEFAULT NULL,
             banner_hash TEXT DEFAULT NULL,
             valid_session_uuid TEXT NOT NULL DEFAULT gen_random_uuid()::TEXT,
+            email_verified BOOLEAN NOT NULL DEFAULT FALSE,
             PRIMARY KEY (id)
         );
         """,
@@ -78,6 +81,11 @@ async def main():
             created_at TIMESTAMP DEFAULT NOW(),
             UNIQUE (account_id, permission)
         );
+        """,
+        """
+            CREATE INDEX IF NOT EXISTS idx_account_email ON account(email);
+            CREATE INDEX IF NOT EXISTS idx_account_base_email ON account(base_email);
+            CREATE INDEX IF NOT EXISTS idx_account_valid_session_uuid ON account(valid_session_uuid);
         """,
     ]
     async with db.acquire() as connection:

@@ -1,17 +1,30 @@
+# basic server
 fastapi
 uvicorn
-pyyaml
-pillow
-asyncpg
 itsdangerous
 python-multipart
-google-re2
 PyJWT
+
+# config reading
+pyyaml
+
+# image processing
+pillow
+asyncpg
+
+# faster re
+google-re2
+
+# async network and file
+aiofiles
+aiohttp
+
+# pjsk api stuff
 msgpack
 pycryptodome
 packaging
-aiofiles
-aiohttp
+
+# s3
 aioboto3
 
 # bundle extraction stuff
@@ -28,3 +41,7 @@ git+https://github.com/Sbotga/pjsekai-scores
 cutlet
 unidic
 rapidfuzz
+
+# emails
+resend # hey resend team, please make an async version :plead:
+jinja2
