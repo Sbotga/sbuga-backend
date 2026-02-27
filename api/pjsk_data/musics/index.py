@@ -133,7 +133,7 @@ def _build_music_simple(
             d["musicDifficulty"] for d in difficulties if d["musicId"] == music_id
         ],
         "jacket_url": jacket_url,
-    }, music["publishedAt"]
+    }
 
 
 @router.get(
@@ -195,8 +195,8 @@ async def get_musics_simple(
             region=region,
             image_type=image_type,
         )
-        for music, pub_at in musics
-        if not app.check_leak(pub_at)
+        for music in musics
+        if not app.check_leak(music["publishedAt"])
     ]
 
     return {"musics": result}
@@ -321,7 +321,7 @@ async def get_musics(
             image_type=image_type,
         )
         for music in musics
-        if not app.check_leak(music["published_at"])
+        if not app.check_leak(music["publishedAt"])
     ]
 
     return {"musics": result}
