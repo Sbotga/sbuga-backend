@@ -140,7 +140,7 @@ async def _build_song_maps(
     en_diff_map = _diff_map(en_difficulties)
 
     jp_keys_list: list[list[str]] = await asyncio.gather(
-        *[asyncio.to_thread(None, _romanize_music, m) for m in jp_musics]
+        *[asyncio.to_thread(_romanize_music, m) for m in jp_musics]
     )
 
     new_jp: dict[str, tuple[int, frozenset[str]]] = {}
@@ -188,7 +188,7 @@ async def _build_event_map(jp_client: PJSKClient, en_client: PJSKClient, app) ->
     en_ids = {e["id"] for e in en_events}
 
     jp_keys_list: list[list[str]] = await asyncio.gather(
-        *[asyncio.to_thread(None, _romanize_event, e) for e in jp_events]
+        *[asyncio.to_thread(_romanize_event, e) for e in jp_events]
     )
 
     new_jp: dict[str, int] = {}
