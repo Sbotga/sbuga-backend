@@ -1,11 +1,9 @@
 from rapidfuzz import fuzz, process
 from rapidfuzz.distance import Levenshtein
 import unicodedata
-import re
-from functools import lru_cache
+import re2
 
 
-@lru_cache(None)
 def preprocess(text: str) -> str:
     text = unicodedata.normalize("NFKC", text)
     text = text.lower().strip()
@@ -16,8 +14,8 @@ def preprocess(text: str) -> str:
         r"|[\U0001F600-\U0001F64F]"
         r"|[\U0001F680-\U0001F6FF]"
     )
-    text = re.sub(STAR_LIKE, " ", text)
-    text = re.sub(r"\s+", " ", text).strip()
+    text = re2.sub(STAR_LIKE, " ", text)
+    text = re2.sub(r"\s+", " ", text).strip()
     return text
 
 
