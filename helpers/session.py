@@ -57,7 +57,7 @@ def decode_session(token: str, app: SbugaFastAPI) -> SessionData:
             type=payload["type"],
             exp=datetime.fromtimestamp(payload["exp"], tz=timezone.utc),
             session_uuid=payload["session_uuid"],
-            extra=payload["extra"],
+            extra=payload.get("extra", {}),
         )
     except jwt.ExpiredSignatureError:
         raise HTTPException(
