@@ -60,7 +60,7 @@ async def main():
             music_id INTEGER NOT NULL,
             region TEXT,
             created_at TIMESTAMP DEFAULT NOW(),
-            created_by INTEGER REFERENCES account(id) ON DELETE SET NULL
+            created_by BIGINT REFERENCES account(id) ON DELETE SET NULL
         );
         """,
         """
@@ -70,13 +70,13 @@ async def main():
             event_id INTEGER NOT NULL,
             region TEXT,
             created_at TIMESTAMP DEFAULT NOW(),
-            created_by INTEGER REFERENCES account(id) ON DELETE SET NULL
+            created_by BIGINT REFERENCES account(id) ON DELETE SET NULL
         );
         """,
         """
         CREATE TABLE IF NOT EXISTS account_permissions (
             id SERIAL PRIMARY KEY,
-            account_id INTEGER NOT NULL REFERENCES account(id) ON DELETE CASCADE,
+            account_id BIGINT NOT NULL REFERENCES account(id) ON DELETE CASCADE,
             permission TEXT NOT NULL,
             created_at TIMESTAMP DEFAULT NOW(),
             UNIQUE (account_id, permission)
