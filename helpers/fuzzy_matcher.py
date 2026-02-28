@@ -1,7 +1,7 @@
 from rapidfuzz import fuzz, process
 from rapidfuzz.distance import Levenshtein
 import unicodedata
-import re2
+import re
 
 
 def preprocess(text: str) -> str:
@@ -9,13 +9,13 @@ def preprocess(text: str) -> str:
     text = text.lower().strip()
 
     STAR_LIKE = (
-        r"[\u2600-\u26FF]"
-        r"|[\U0001F300-\U0001F5FF]"
-        r"|[\U0001F600-\U0001F64F]"
-        r"|[\U0001F680-\U0001F6FF]"
-    )
-    text = re2.sub(STAR_LIKE, " ", text)
-    text = re2.sub(r"\s+", " ", text).strip()
+        r"[\u2600-\u26FF"
+        r"\U0001F300-\U0001F5FF"
+        r"\U0001F600-\U0001F64F"
+        r"\U0001F680-\U0001F6FF]"
+    )  # NOTE: re2 doesn't support unicode patterns.... WHYYY
+    text = re.sub(STAR_LIKE, " ", text)
+    text = re.sub(r"\s+", " ", text).strip()
     return text
 
 
