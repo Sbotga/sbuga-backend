@@ -58,7 +58,7 @@ def _merge_maps(maps: list[dict]) -> dict:
 def match_song(
     query: str,
     region: str | None = None,
-    sensitivity: float = 0.7,
+    sensitivity: float = 0.65,
     multi: bool = False,
     difficulties: list[str] | None = None,
 ) -> int | None | list[int]:

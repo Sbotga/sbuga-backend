@@ -13,8 +13,21 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from core import SbugaFastAPI
 
-_katsu = cutlet.Cutlet()
-_katsu_foreign = cutlet.Cutlet(ensure_ascii=False)
+_katsu_hepburn = cutlet.Cutlet(
+    system="hepburn", use_foreign_spelling=False, ensure_ascii=False
+)
+_katsu_nihon = cutlet.Cutlet(
+    system="nihon", use_foreign_spelling=False, ensure_ascii=False
+)
+_katsu_kunrei = cutlet.Cutlet(
+    system="kunrei", use_foreign_spelling=False, ensure_ascii=False
+)
+
+ROMANIZERS = [
+    lambda text: _katsu_hepburn.romaji(text).lower().strip(),
+    lambda text: _katsu_nihon.romaji(text).lower().strip(),
+    lambda text: _katsu_kunrei.romaji(text).lower().strip(),
+]
 
 _song_maps: dict[str, dict[str, tuple[int, frozenset[str]]]] = {"jp": {}, "en": {}}
 _character_map: dict[str, int] = {}
@@ -39,18 +52,22 @@ async def get_event_aliases(app: SbugaFastAPI) -> dict[str, int]:
     return {row.alias: row.event_id for row in rows}
 
 
-def _romaji(text: str) -> str | None:
-    try:
-        return _katsu.romaji(text).strip("?").lower().strip()
-    except Exception:
-        return None
+def _is_romanized(original: str, result: str) -> bool:
+    original_clean = "".join(preprocess(original).split())
+    result_clean = "".join(preprocess(result).split())
+    return result_clean != original_clean
 
 
-def _romaji_foreign(text: str) -> str | None:
-    try:
-        return _katsu_foreign.romaji(text).strip("?").lower().strip()
-    except Exception:
-        return None
+def _romanize_text(text: str) -> list[str]:
+    keys = []
+    for fn in ROMANIZERS:
+        try:
+            r = fn(text)
+        except Exception:
+            continue
+        if r and _is_romanized(text, r):
+            keys.append(preprocess(r))
+    return list(dict.fromkeys(keys))
 
 
 def _romanize_music(music: dict) -> list[str]:
@@ -63,10 +80,7 @@ def _romanize_music(music: dict) -> list[str]:
     for text in [title, pronunciation]:
         if not text:
             continue
-        for fn in [_romaji, _romaji_foreign]:
-            r = fn(text)
-            if r:
-                keys.append(preprocess(r))
+        keys.extend(_romanize_text(text))
 
     return list(dict.fromkeys(keys))
 
@@ -76,11 +90,7 @@ def _romanize_event(event: dict) -> list[str]:
     title = event["name"].strip().lower()
 
     keys.append(preprocess(title))
-
-    for fn in [_romaji, _romaji_foreign]:
-        r = fn(title)
-        if r:
-            keys.append(preprocess(r))
+    keys.extend(_romanize_text(title))
 
     short = event["assetbundleName"].split("_")[1]
     keys.append(preprocess(short))
@@ -95,6 +105,12 @@ def _plain_event_keys(event: dict) -> list[str]:
         preprocess(event["assetbundleName"].split("_")[1]),
         preprocess(str(event["id"])),
     ]
+    return list(dict.fromkeys(keys))
+
+
+def _romanize_alias(alias: str) -> list[str]:
+    keys = [preprocess(alias)]
+    keys.extend(_romanize_text(alias))
     return list(dict.fromkeys(keys))
 
 
@@ -123,10 +139,8 @@ async def _build_song_maps(
     jp_diff_map = _diff_map(jp_difficulties)
     en_diff_map = _diff_map(en_difficulties)
 
-    loop = asyncio.get_event_loop()
-
     jp_keys_list: list[list[str]] = await asyncio.gather(
-        *[loop.run_in_executor(None, _romanize_music, m) for m in jp_musics]
+        *[asyncio.to_thread(None, _romanize_music, m) for m in jp_musics]
     )
 
     new_jp: dict[str, tuple[int, frozenset[str]]] = {}
@@ -151,13 +165,13 @@ async def _build_song_maps(
             new_jp[key] = (music_id, jp_diffs)
 
     for alias, music_id in aliases.items():
-        key = preprocess(alias)
         jp_diffs = jp_diff_map.get(music_id, frozenset())
         en_diffs = en_diff_map.get(music_id, frozenset())
-        if music_id in jp_ids:
-            new_jp[key] = (music_id, jp_diffs)
-        if music_id in en_ids:
-            new_en[key] = (music_id, en_diffs)
+        for key in _romanize_alias(alias):
+            if music_id in jp_ids:
+                new_jp[key] = (music_id, jp_diffs)
+            if music_id in en_ids:
+                new_en[key] = (music_id, en_diffs)
 
     _song_maps["jp"] = new_jp
     _song_maps["en"] = new_en
@@ -173,16 +187,13 @@ async def _build_event_map(jp_client: PJSKClient, en_client: PJSKClient, app) ->
     jp_ids = {e["id"] for e in jp_events}
     en_ids = {e["id"] for e in en_events}
 
-    loop = asyncio.get_event_loop()
-
     jp_keys_list: list[list[str]] = await asyncio.gather(
-        *[loop.run_in_executor(None, _romanize_event, e) for e in jp_events]
+        *[asyncio.to_thread(None, _romanize_event, e) for e in jp_events]
     )
 
     new_jp: dict[str, int] = {}
     new_en: dict[str, int] = {}
 
-    # JP events
     for event, keys in zip(jp_events, jp_keys_list):
         event_id = event["id"]
         for key in keys:
@@ -190,7 +201,6 @@ async def _build_event_map(jp_client: PJSKClient, en_client: PJSKClient, app) ->
             if event_id in en_ids:
                 new_en[key] = event_id
 
-    # EN events
     for event in en_events:
         event_id = event["id"]
         for key in _plain_event_keys(event):
@@ -198,13 +208,12 @@ async def _build_event_map(jp_client: PJSKClient, en_client: PJSKClient, app) ->
             if event_id in jp_ids:
                 new_jp[key] = event_id
 
-    # Aliases
     for alias, event_id in aliases.items():
-        key = preprocess(alias)
-        if event_id in jp_ids:
-            new_jp[key] = event_id
-        if event_id in en_ids:
-            new_en[key] = event_id
+        for key in _romanize_alias(alias):
+            if event_id in jp_ids:
+                new_jp[key] = event_id
+            if event_id in en_ids:
+                new_en[key] = event_id
 
     _event_maps["jp"] = new_jp
     _event_maps["en"] = new_en
@@ -216,7 +225,6 @@ async def _build_character_map(jp_client: PJSKClient) -> None:
         jp_client.get_master("outsideCharacters"),
     )
 
-    loop = asyncio.get_event_loop()
     new_map: dict[str, int] = {}
 
     async def _add_character(char_id: int, names: list[str]) -> None:
@@ -224,10 +232,8 @@ async def _build_character_map(jp_client: PJSKClient) -> None:
             if not name:
                 continue
             new_map[preprocess(name)] = char_id
-            for fn in [_romaji, _romaji_foreign]:
-                r = await loop.run_in_executor(None, fn, name)
-                if r:
-                    new_map[preprocess(r)] = char_id
+            for key in await asyncio.to_thread(_romanize_text, name):
+                new_map[key] = char_id
 
     tasks = []
     for char in game_characters:
@@ -267,13 +273,11 @@ async def rebuild_maps(
         )
 
 
-# add/remove new aliases without rebuilding entire maps
 def add_song_alias(
     alias: str,
     music_id: int,
     region: str | None = None,
 ) -> None:
-    key = preprocess(alias)
     regions = [region] if region else list(_song_maps.keys())
     for r in regions:
         mapping = _song_maps.get(r, {})
@@ -281,7 +285,8 @@ def add_song_alias(
             (v[1] for v in mapping.values() if v[0] == music_id),
             frozenset(),
         )
-        mapping[key] = (music_id, diffs)
+        for key in _romanize_alias(alias):
+            mapping[key] = (music_id, diffs)
 
 
 def add_event_alias(
@@ -289,28 +294,30 @@ def add_event_alias(
     event_id: int,
     region: str | None = None,
 ) -> None:
-    key = preprocess(alias)
     regions = [region] if region else list(_event_maps.keys())
     for r in regions:
         mapping = _event_maps.get(r, {})
-        mapping[key] = event_id
+        for key in _romanize_alias(alias):
+            mapping[key] = event_id
 
 
 def remove_song_alias(
     alias: str,
     region: str | None = None,
 ) -> None:
-    key = preprocess(alias)
     regions = [region] if region else list(_song_maps.keys())
     for r in regions:
-        _song_maps.get(r, {}).pop(key, None)
+        mapping = _song_maps.get(r, {})
+        for key in _romanize_alias(alias):
+            mapping.pop(key, None)
 
 
 def remove_event_alias(
     alias: str,
     region: str | None = None,
 ) -> None:
-    key = preprocess(alias)
     regions = [region] if region else list(_event_maps.keys())
     for r in regions:
-        _event_maps.get(r, {}).pop(key, None)
+        mapping = _event_maps.get(r, {})
+        for key in _romanize_alias(alias):
+            mapping.pop(key, None)
