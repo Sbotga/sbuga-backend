@@ -147,7 +147,7 @@ async def main(request: Request, body: SignupBody):
         )
         account = await conn.fetchrow(db.accounts.get_account_by_id(account_id))
 
-    access_token = await create_session(account_id, app, type="access")
+    access_token = await create_session(account_id, app, type="email_verification")
     refresh_token = await create_session(account_id, app, type="refresh")
 
     return {
