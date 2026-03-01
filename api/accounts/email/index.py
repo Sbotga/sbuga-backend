@@ -34,9 +34,7 @@ router = APIRouter()
 async def send_verification_email(
     request: Request,
     session: Session = get_session(
-        enforce_auth=True,
         allow_unverified_email=True,
-        enforce_type="email_verification",
     ),
 ):
     app: SbugaFastAPI = request.app

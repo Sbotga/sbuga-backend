@@ -34,16 +34,5 @@ async def main(
     session: Session = get_session(enforce_type="refresh", allow_unverified_email=True),
 ):
     app: SbugaFastAPI = request.app
-    access_token = await create_session(
-        session.account_id,
-        app,
-        type=(
-            "access" if (await session.user()).email_verified else "email_verification"
-        ),
-        extra=(
-            {}
-            if (await session.user()).email_verified
-            else {"email": (await session.user()).email}
-        ),
-    )
+    access_token = await create_session(session.account_id, app, type="access")
     return {"token": access_token}

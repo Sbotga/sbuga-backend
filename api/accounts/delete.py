@@ -47,9 +47,7 @@ async def _delete_s3_assets(app: SbugaFastAPI, account_id: int) -> None:
 async def delete_account(
     request: Request,
     session: Session = get_session(
-        enforce_auth=True,
         allow_unverified_email=True,
-        enforce_type=["access", "email_verification"],
     ),
 ):
     app: SbugaFastAPI = request.app

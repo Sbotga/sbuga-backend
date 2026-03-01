@@ -81,12 +81,7 @@ async def main(request: Request, body: LoginBody):
             detail=ErrorDetailCode.InvalidAccountDetails.value,
         )
 
-    access_token = await create_session(
-        account.id,
-        app,
-        type="access" if account.email_verified else "email_verification",
-        extra={} if account.email_verified else {"email": account.email},
-    )
+    access_token = await create_session(account.id, app, type="access")
     refresh_token = await create_session(account.id, app, type="refresh")
 
     return {

@@ -147,10 +147,23 @@ async def main(request: Request, body: SignupBody):
         )
         account = await conn.fetchrow(db.accounts.get_account_by_id(account_id))
 
-    access_token = await create_session(
-        account_id, app, type="email_verification", extra={"email": account.email}
-    )
+    access_token = await create_session(account_id, app, type="access")
     refresh_token = await create_session(account_id, app, type="refresh")
+
+    token = await create_session(
+        account.id,
+        app,
+        type="email_verification",
+        extra={"email": account.email},
+    )
+
+    await emails.send_verification_email(
+        app=app,
+        to_email=account.email,
+        display_name=account.display_name,
+        username=account.username,
+        token=token,
+    )
 
     return {
         "user": {
