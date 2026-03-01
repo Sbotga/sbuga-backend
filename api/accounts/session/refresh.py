@@ -39,5 +39,10 @@ async def main(
         type=(
             "access" if (await session.user()).email_verified else "email_verification"
         ),
+        extra=(
+            {}
+            if (await session.user()).email_verified
+            else {"email": (await session.user()).email}
+        ),
     )
     return {"token": access_token}

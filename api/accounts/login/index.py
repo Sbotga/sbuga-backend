@@ -85,6 +85,7 @@ async def main(request: Request, body: LoginBody):
         account.id,
         app,
         type="access" if account.email_verified else "email_verification",
+        extra={} if account.email_verified else {"email": account.email},
     )
     refresh_token = await create_session(account.id, app, type="refresh")
 
