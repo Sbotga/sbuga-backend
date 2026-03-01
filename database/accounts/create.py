@@ -8,7 +8,7 @@ def create_account(
     return ExecutableQuery(
         """
         INSERT INTO account (id, email, base_email, display_name, username, salted_password)
-        VALUES ($1, $2, $3, $4);
+        VALUES ($1, $2, $3, $4, $5, $6);
         """,
         email,
         get_base_email(email),
