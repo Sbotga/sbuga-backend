@@ -52,7 +52,7 @@ async def send_verification_email(
     app: SbugaFastAPI, to_email: str, display_name: str, username: str, token: str
 ) -> None:
     verify_url = (
-        f"{app.base_url}/auth/email/verify?token={token}"
+        f"https://{app.config.server.frontend_domain}/auth/email/verify?token={token}"
         if app.config.server.environment == "production"
         else f"{app.base_url}/accounts/email/verify?token={token}"
     )
