@@ -10,9 +10,9 @@ def create_account(
         INSERT INTO account (id, email, base_email, display_name, username, salted_password)
         VALUES ($1, $2, $3, $4, $5, $6);
         """,
+        account_id,
         email,
         get_base_email(email),
-        account_id,
         display_name,
         username,
         salted_password,
