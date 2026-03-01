@@ -116,7 +116,9 @@ async def _upload_s3(app: SbugaFastAPI, png_bytes: bytes, webp_bytes: bytes, pat
 )
 async def get_self(
     request: Request,
-    session: Session = get_session(enforce_type=["access", "email_verification"]),
+    session: Session = get_session(
+        enforce_type=["access", "email_verification"], allow_unverified_email=True
+    ),
 ):
     app: SbugaFastAPI = request.app
     account = await session.user()

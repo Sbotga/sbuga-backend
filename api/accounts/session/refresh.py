@@ -30,7 +30,8 @@ router = APIRouter()
     tags=["Auth"],
 )
 async def main(
-    request: Request, session: Session = get_session(enforce_type="refresh")
+    request: Request,
+    session: Session = get_session(enforce_type="refresh", allow_unverified_email=True),
 ):
     app: SbugaFastAPI = request.app
     access_token = await create_session(
