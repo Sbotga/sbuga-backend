@@ -57,13 +57,13 @@ async def send_verification_email(
         else f"{app.base_url}/accounts/email/verify?token={token}"
     )
     html = render_email_template(
-        "verify_email.jinja2",
+        "email_verify.jinja2",
         display_name=display_name,
         username=username,
         verify_url=verify_url,
     )
     text = render_email_template(
-        "verify_email_text.jinja2",
+        "email_verify_text.jinja2",
         display_name=display_name,
         username=username,
         verify_url=verify_url,
