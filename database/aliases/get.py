@@ -9,11 +9,11 @@ def get_event_aliases() -> SelectQuery[EventAlias]:
     )
 
 
-def get_event_alias(alias: str) -> SelectQuery[EventAlias]:
+def get_event_alias(id: int) -> SelectQuery[EventAlias]:
     return SelectQuery(
         EventAlias,
-        "SELECT * FROM event_aliases WHERE alias = $1",
-        alias,
+        "SELECT * FROM event_aliases WHERE id = $1",
+        id,
     )
 
 
@@ -24,9 +24,9 @@ def get_song_aliases() -> SelectQuery[SongAlias]:
     )
 
 
-def get_song_alias(alias: str) -> SelectQuery[SongAlias]:
+def get_song_alias(id: int) -> SelectQuery[SongAlias]:
     return SelectQuery(
         SongAlias,
-        "SELECT * FROM song_aliases WHERE alias = $1",
-        alias,
+        "SELECT * FROM song_aliases WHERE id = $1",
+        id,
     )

@@ -28,6 +28,7 @@ class ErrorDetailCode(StrEnum):
     FileTooLarge = "file_too_large"
     InvalidImage = "invalid_image"
     Forbidden = "forbidden"
+    Conflict = "conflict"
 
     PJSKMaintainence = "maintainence_pjsk"
     PJSKClientUnavailable = "pjsk_region_unavailable"
