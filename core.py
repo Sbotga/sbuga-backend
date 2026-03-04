@@ -304,7 +304,6 @@ class SbugaFastAPI(FastAPI):
             for _ in range(20):
                 try:
                     async with cs.get("http://127.0.0.1:5001") as resp:
-                        print(await resp.content.read())
                         if resp.status == 200:
                             break
                 except Exception:
