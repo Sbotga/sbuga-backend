@@ -57,9 +57,7 @@ def _generate_png_subprocess(svg_path: Path, png_path: Path) -> None:
     )
 
     if sys.platform == "win32":
-        kwargs["creationflags"] = (
-            subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.CREATE_NO_WINDOW
-        )
+        kwargs["creationflags"] = subprocess.CREATE_NO_WINDOW
 
     proc = subprocess.Popen(command, **kwargs)
     try:

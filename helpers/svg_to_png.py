@@ -51,7 +51,7 @@ def get_browser():
     options.add_argument("--renderer-process-limit=1")
 
     if os.name == "nt":
-        service = Service(creationflags=subprocess.CREATE_NEW_PROCESS_GROUP)
+        service = Service(creationflags=subprocess.CREATE_NO_WINDOW)
     else:
         service = Service(preexec_fn=os.setsid)
 

@@ -9,6 +9,7 @@ from contextlib import asynccontextmanager
 from database import DBConnWrapper
 
 import asyncpg
+import aiohttp
 import aioboto3
 
 from typing import AsyncGenerator, Optional
@@ -122,7 +123,7 @@ class SbugaFastAPI(FastAPI):
             ssl="disable",  # XXX: todo, lazy for now
         )
 
-        self._start_gorgon_subprocess()
+        await self._start_gorgon_subprocess()
         asyncio.create_task(self._set_en_pjsk_client())
         asyncio.create_task(self._set_jp_pjsk_client())
         asyncio.create_task(self._set_tw_pjsk_client())
@@ -264,6 +265,14 @@ class SbugaFastAPI(FastAPI):
         for client in self.pjsk_clients.values():
             if client:
                 await client.close()
+        try:
+            self._gorgon_proc.kill()
+        except:
+            pass
+        try:
+            self._gorgon_proc.terminate()
+        except:
+            pass
 
     def openapi(self):
         if self.openapi_schema:
@@ -275,7 +284,7 @@ class SbugaFastAPI(FastAPI):
         self.openapi_schema = schema
         return self.openapi_schema
 
-    def _start_gorgon_subprocess(self):
+    async def _start_gorgon_subprocess(self):
         proc = subprocess.Popen(
             [sys.executable, "-m", "pjsk_api.gorgon"],
             stdin=subprocess.DEVNULL,
@@ -283,13 +292,25 @@ class SbugaFastAPI(FastAPI):
             stderr=None,
             close_fds=True,
             **(
-                {
-                    "creationflags": subprocess.CREATE_NEW_PROCESS_GROUP
-                    | subprocess.CREATE_NO_WINDOW
-                }
+                {"creationflags": subprocess.CREATE_NO_WINDOW}
                 if sys.platform == "win32"
                 else {}
             ),
         )
         self._gorgon_proc = proc
+
+        print("Waiting for gorgon header helper")
+        async with aiohttp.ClientSession() as cs:
+            for _ in range(20):
+                try:
+                    async with cs.get("http://127.0.0.1:5001") as resp:
+                        print(await resp.content.read())
+                        if resp.status == 200:
+                            break
+                except Exception:
+                    pass
+                await asyncio.sleep(0.5)
+            else:
+                raise RuntimeError("Gorgon header subprocess did not start in time")
+
         print("Gorgon header subprocess started")
