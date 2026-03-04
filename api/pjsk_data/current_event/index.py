@@ -127,7 +127,7 @@ async def _save_cache(data: dict, cache_path: Path) -> None:
     },
     tags=["PJSK Data"],
 )
-async def current_event(request: Request, region: Literal["en", "jp"]):
+async def current_event(request: Request, region: Literal["en", "jp", "tw", "kr"]):
     app: SbugaFastAPI = request.app
 
     client = app.pjsk_clients.get(region)

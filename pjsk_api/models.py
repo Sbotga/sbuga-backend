@@ -38,3 +38,7 @@ class SekaiUserAuthData(BaseModel):
     obtainedBondsRewardIds: Optional[list] = None
     cdnVersion: Optional[int] = None
     configs: Optional[List[dict]] = None
+
+
+class SekaiUserAuthDataRow(SekaiUserAuthData, SekaiUserData):
+    pass

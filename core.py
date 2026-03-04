@@ -1,4 +1,4 @@
-import asyncio, time
+import asyncio, time, subprocess, sys
 from fastapi import FastAPI, Request
 from fastapi import status, HTTPException
 from fastapi.exceptions import RequestValidationError
@@ -18,16 +18,27 @@ from helpers.erroring import ErrorDetailCode
 from pjsk_api import clients, PJSKClient, set_client
 from pjsk_api.client import RequestData, T
 from pjsk_api.requests.authenticate_client import authenticate_client
+from pjsk_api.requests.authenticate_client_row import (
+    authenticate_client as authenticate_client_row,
+)
 from pjsk_api.requests.ensure_updated_masterdata import ensure_updated_masterdata
 from pjsk_api.requests.ensure_updated_assetinfo import ensure_updated_assetinfo
 from pjsk_api.asset_handlers import download_and_process_assets
 from pjsk_api.requests.request_handling import request_with_retry
-from pjsk_api.app_ver_hash import get_en, get_jp
+from pjsk_api.app_ver_hash import get_en, get_jp, get_tw, get_kr, get_cn
 from helpers.converter_maps import rebuild_maps
 
 _error_detail_values = {e.value for e in ErrorDetailCode}
 _clients_ready = 0
 _clients_ready_lock = asyncio.Lock()
+
+_get_version_fns = {
+    "jp": get_jp,
+    "en": get_en,
+    "tw": get_tw,
+    "kr": get_kr,
+    "cn": get_cn,
+}
 
 
 def _extract_detail(exc_detail) -> tuple[str, dict | None]:
@@ -111,8 +122,12 @@ class SbugaFastAPI(FastAPI):
             ssl="disable",  # XXX: todo, lazy for now
         )
 
+        self._start_gorgon_subprocess()
         asyncio.create_task(self._set_en_pjsk_client())
         asyncio.create_task(self._set_jp_pjsk_client())
+        asyncio.create_task(self._set_tw_pjsk_client())
+        asyncio.create_task(self._set_kr_pjsk_client())
+        # asyncio.create_task(self._set_cn_pjsk_client()) # NOTE: does not work
 
     async def _client_ready(self):
         global _clients_ready
@@ -126,7 +141,11 @@ class SbugaFastAPI(FastAPI):
     async def _set_en_pjsk_client(self):
         data = await get_en()
         client = PJSKClient(
-            self, "en", app_version=data["app_version"], app_hash=data["app_hash"]
+            self,
+            "en",
+            app_version=data["app_version"],
+            app_hash=data["app_hash"],
+            ab_version=data.get("ab_version"),
         )
         await client.start()
         await authenticate_client(client)
@@ -139,7 +158,11 @@ class SbugaFastAPI(FastAPI):
     async def _set_jp_pjsk_client(self):
         data = await get_jp()
         client = PJSKClient(
-            self, "jp", app_version=data["app_version"], app_hash=data["app_hash"]
+            self,
+            "jp",
+            app_version=data["app_version"],
+            app_hash=data["app_hash"],
+            ab_version=data.get("ab_version"),
         )
         await client.start()
         await authenticate_client(client)
@@ -148,6 +171,33 @@ class SbugaFastAPI(FastAPI):
         asyncio.create_task(download_and_process_assets(client))
         await set_client("jp", client)
         await self._client_ready()
+
+    async def _set_row_pjsk_client(self, region: str):
+        get_version = _get_version_fns[region]
+        data = await get_version()
+        client = PJSKClient(
+            self,
+            region,
+            app_version=data["app_version"],
+            app_hash=data["app_hash"],
+            ab_version=data.get("ab_version"),
+        )
+        await client.start()
+        await authenticate_client_row(client)
+        await ensure_updated_masterdata(client)
+        await ensure_updated_assetinfo(client)
+        # asyncio.create_task(download_and_process_assets(client))
+        await set_client(region, client)
+        # await self._client_ready()
+
+    async def _set_tw_pjsk_client(self):
+        await self._set_row_pjsk_client("tw")
+
+    async def _set_kr_pjsk_client(self):
+        await self._set_row_pjsk_client("kr")
+
+    async def _set_cn_pjsk_client(self):
+        await self._set_row_pjsk_client("cn")
 
     async def pjsk_request(
         self, region: str, request: RequestData[T], cached_data: Optional[dict] = None
@@ -224,3 +274,22 @@ class SbugaFastAPI(FastAPI):
                 operation.get("responses", {}).pop("422", None)
         self.openapi_schema = schema
         return self.openapi_schema
+
+    def _start_gorgon_subprocess(self):
+        proc = subprocess.Popen(
+            [sys.executable, "-m", "pjsk_api.gorgon"],
+            stdin=subprocess.DEVNULL,
+            stdout=None,
+            stderr=None,
+            close_fds=True,
+            **(
+                {
+                    "creationflags": subprocess.CREATE_NEW_PROCESS_GROUP
+                    | subprocess.CREATE_NO_WINDOW
+                }
+                if sys.platform == "win32"
+                else {}
+            ),
+        )
+        self._gorgon_proc = proc
+        print("Gorgon header subprocess started")

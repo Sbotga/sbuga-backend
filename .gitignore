@@ -3,7 +3,13 @@ pjsk_api/asset_handlers/
 pjsk_api/data/
 pjsk_api/constants.py
 pjsk_api/app_ver_hash.py
+pjsk_api/nuverse_masterdata/
 config.yml
+
+# very very sensitive gorgon headers
+pjsk_api/gorgon.py
+pjsk_api/gorgon_client.py
+pjsk_api/leviathan/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

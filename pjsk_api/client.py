@@ -58,6 +58,7 @@ class PJSKClient:
         app_platform: str = "android",
         unity_version: str = "2022.3.21f1",
         num_users: int = 5,
+        ab_version: str | None = None,
     ):
         self.app: SbugaFastAPI = app
 
@@ -66,6 +67,7 @@ class PJSKClient:
         self.app_hash = app_hash
         self.app_platform = app_platform
         self.unity_version = unity_version
+        self.ab_version = ab_version  # used for ROW servers
         self.num_users = min(max(1, num_users), MAX_USERS)
 
         self.is_authenticated: bool = False
@@ -185,7 +187,7 @@ class PJSKClient:
                     response.request_info,
                     response.history,
                     status=response.status,
-                    message=raw.decode(errors="replace"),
+                    message=self._unpack(raw),
                 )
                 err.slot = slot
                 raise err

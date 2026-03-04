@@ -23,6 +23,8 @@ aiohttp
 msgpack
 pycryptodome
 packaging
+androidemu
+unicorn
 
 # s3
 aioboto3
