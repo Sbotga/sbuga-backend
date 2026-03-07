@@ -18,6 +18,38 @@ _file_cache_loaded: set[str] = set()
 CACHE_TTL = 300
 CACHE_FILE = "ranked.json"
 
+_cheaters_cache: dict | None = None
+_cheaters_cache_time: float = 0
+_cheaters_lock = asyncio.Lock()
+CHEATERS_FILE = Path("cheaters.json")
+CHEATERS_TTL = 300
+
+
+async def get_cheaters(region: str) -> list[int]:
+    global _cheaters_cache, _cheaters_cache_time
+
+    if (
+        _cheaters_cache is not None
+        and _cheaters_cache_time + CHEATERS_TTL > time.time()
+    ):
+        return _cheaters_cache.get(region, [])
+
+    async with _cheaters_lock:
+        if (
+            _cheaters_cache is not None
+            and _cheaters_cache_time + CHEATERS_TTL > time.time()
+        ):
+            return _cheaters_cache.get(region, [])
+
+        try:
+            async with aiofiles.open(CHEATERS_FILE, "r", encoding="utf8") as f:
+                _cheaters_cache = json.loads(await f.read())
+            _cheaters_cache_time = time.time()
+        except Exception:
+            _cheaters_cache = {}
+
+    return _cheaters_cache.get(region, [])
+
 
 def get_lock(region: str) -> asyncio.Lock:
     if region not in locks:
@@ -87,6 +119,7 @@ async def _save_cache(data: dict, cache_path: Path) -> None:
                                 "season_status": "going",
                                 "season_name": "Autmumn 2025",
                                 "top_100": {},
+                                "cheaters": [1, 2, 3],
                             },
                         },
                         "none": {
@@ -121,6 +154,7 @@ async def _save_cache(data: dict, cache_path: Path) -> None:
                                     "season_status": "going",
                                     "season_name": "Autumn 2025",
                                     "top_100": {},
+                                    "cheaters": [1, 2, 3],
                                 },
                             },
                         },
@@ -186,6 +220,7 @@ async def current_ranked(request: Request, region: Literal["en", "jp", "tw", "kr
                 "season_status": season["status"],
                 "season_name": season["name"],
                 "top_100": top_100,
+                "cheaters": await get_cheaters(region),
             }
             cached[region] = data
             asyncio.create_task(_save_cache(data, cache_path))
