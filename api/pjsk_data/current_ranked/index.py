@@ -119,7 +119,7 @@ async def _save_cache(data: dict, cache_path: Path) -> None:
                                 "season_status": "going",
                                 "season_name": "Autmumn 2025",
                                 "top_100": {},
-                                "cheaters": [1, 2, 3],
+                                "cheaters": ["1", "2", "3"],
                             },
                         },
                         "none": {
@@ -154,7 +154,7 @@ async def _save_cache(data: dict, cache_path: Path) -> None:
                                     "season_status": "going",
                                     "season_name": "Autumn 2025",
                                     "top_100": {},
-                                    "cheaters": [1, 2, 3],
+                                    "cheaters": ["1", "2", "3"],
                                 },
                             },
                         },
