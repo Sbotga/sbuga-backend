@@ -104,6 +104,7 @@ async def _upload_s3(app: SbugaFastAPI, png_bytes: bytes, webp_bytes: bytes, pat
                             "profile_hash": "abc123...",
                             "banner_hash": "abc123...",
                             "banned": False,
+                            "permissions": ["permission"],
                         },
                         "asset_base_url": "https://assets.sbuga.com",
                     }
@@ -134,6 +135,7 @@ async def get_self(
             "profile_hash": account.profile_hash,
             "banner_hash": account.banner_hash,
             "banned": account.banned,
+            "permissions": session.permissions,
         },
         "asset_base_url": app.s3_asset_base_url,
     }
