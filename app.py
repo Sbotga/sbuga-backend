@@ -1,4 +1,5 @@
 import os, importlib, traceback
+from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import Request, status
 from starlette.middleware.trustedhost import TrustedHostMiddleware
@@ -14,28 +15,33 @@ config = get_config()
 debug = config.server.debug
 resend.api_key = config.resend.api_key
 
-if debug:
-    app = SbugaFastAPI(
-        config=config,
-        responses={
-            500: {
-                "description": f"Internal server error. (`{ErrorDetailCode.InternalServerError}`)",
-                **ERROR_RESPONSE,
-            },
+
+@asynccontextmanager
+async def lifespan(app: SbugaFastAPI):
+    await startup_event()
+    yield
+    await app.shutdown()
+
+
+common_kwargs = dict(
+    config=config,
+    lifespan=lifespan,
+    responses={
+        500: {
+            "description": f"Internal server error. (`{ErrorDetailCode.InternalServerError}`)",
+            **ERROR_RESPONSE,
         },
-    )
+    },
+)
+
+if debug:
+    app = SbugaFastAPI(**common_kwargs)
 else:
     app = SbugaFastAPI(
-        config=config,
         docs_url=None,
         redoc_url=None,
         openapi_url=None,
-        responses={
-            500: {
-                "description": f"Internal server error. (`{ErrorDetailCode.InternalServerError}`)",
-                **ERROR_RESPONSE,
-            },
-        },
+        **common_kwargs,
     )
 
 app.add_middleware(
@@ -126,7 +132,6 @@ async def startup_event():
         print("Routes loaded!")
 
 
-app.add_event_handler("startup", startup_event)
 
 
 async def start_fastapi():

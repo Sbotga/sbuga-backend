@@ -67,9 +67,6 @@ class SbugaFastAPI(FastAPI):
 
         self.pjsk_clients: dict[str, PJSKClient] = clients
 
-        # Event handlers
-        self.add_event_handler("shutdown", self.shutdown)
-
         # Exception handlers
         self.add_exception_handler(Exception, self.unhandled_exception_handler)
         self.add_exception_handler(
