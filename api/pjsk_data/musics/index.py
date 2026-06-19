@@ -28,6 +28,8 @@ def _build_music(
     difficulties: list,
     asset_variants: list,
     artists: list,
+    game_characters: dict,
+    outside_characters: dict,
     asset_base_url: str,
     region: str,
     image_type: Literal["webp", "png"],
@@ -100,6 +102,15 @@ def _build_music(
         dict.fromkeys(key for key, (mid, _) in region_map.items() if mid == music_id)
     )
 
+    used_game_ids = set()
+    used_outside_ids = set()
+    for v in music_vocals:
+        for c in v["characters"]:
+            if c["character_type"] == "game_character":
+                used_game_ids.add(c["character_id"])
+            else:
+                used_outside_ids.add(c["character_id"])
+
     return {
         "id": music_id,
         "title": music["title"],
@@ -130,6 +141,14 @@ def _build_music(
         "original_video": original_video,
         "difficulties": music_difficulties,
         "vocals": music_vocals,
+        "game_characters": {
+            cid: game_characters[cid] for cid in used_game_ids if cid in game_characters
+        },
+        "outside_characters": {
+            cid: outside_characters[cid]
+            for cid in used_outside_ids
+            if cid in outside_characters
+        },
     }
 
 
@@ -288,6 +307,14 @@ async def get_musics_simple(
                                         ],
                                     }
                                 ],
+                                "game_characters": {
+                                    "21": {
+                                        "givenName": "Miku",
+                                        "firstName": "Hatsune",
+                                        "unit": "piapro",
+                                    }
+                                },
+                                "outside_characters": {},
                             }
                         ]
                     }
@@ -322,6 +349,8 @@ async def get_musics(
         difficulties,
         asset_variants,
         artists,
+        game_chars_raw,
+        outside_chars_raw,
     ) = await asyncio.gather(
         client.get_master("musics"),
         client.get_master("musicVocals"),
@@ -331,7 +360,19 @@ async def get_musics(
         client.get_master("musicDifficulties"),
         client.get_master("musicAssetVariants"),
         client.get_master("musicArtists"),
+        client.get_master("gameCharacters"),
+        client.get_master("outsideCharacters"),
     )
+
+    game_characters = {
+        c["id"]: {
+            "givenName": c.get("givenName", ""),
+            "firstName": c.get("firstName", ""),
+            "unit": c.get("unit", ""),
+        }
+        for c in game_chars_raw
+    }
+    outside_characters = {c["id"]: {"name": c["name"]} for c in outside_chars_raw}
 
     originals_by_music = {o["musicId"]: o for o in originals}
     collaborations_by_id = {c["id"]: c for c in collaborations}
@@ -346,6 +387,8 @@ async def get_musics(
             difficulties=difficulties,
             asset_variants=asset_variants,
             artists=artists,
+            game_characters=game_characters,
+            outside_characters=outside_characters,
             asset_base_url=app.s3_asset_base_url,
             region=region,
             image_type=image_type,
