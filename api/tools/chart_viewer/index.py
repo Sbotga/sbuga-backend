@@ -115,9 +115,9 @@ async def get_chart(
             detail=ErrorDetailCode.NotFound.value,
         )
     jacket_path = str(
-        app.base_url
-        + "/api/pjsk_data/assets/music/jacket/"
-        + f"{music['assetbundleName']}/{music['assetbundleName']}.png?region={region}"
+        app.s3_asset_base_url
+        + f"/pjsk_data/{region}/music/jacket/"
+        + f"{music['assetbundleName']}/{music['assetbundleName']}.png"
     )
     score_path = (
         client.data_path

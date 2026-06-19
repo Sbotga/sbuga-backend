@@ -27,7 +27,7 @@ def _build_music(
     difficulties: list,
     asset_variants: list,
     artists: list,
-    base_url: str,
+    asset_base_url: str,
     region: str,
     image_type: Literal["webp", "png"],
 ) -> dict:
@@ -49,22 +49,30 @@ def _build_music(
     ]
 
     ab_name = music["assetbundleName"]
-    jacket_url = f"{base_url}/api/pjsk_data/assets/music/jacket/{ab_name}/{ab_name}.{image_type}?region={region}"
+    jacket_url = f"{asset_base_url}/pjsk_data/{region}/music/jacket/{ab_name}/{ab_name}.{image_type}"
 
     music_vocals = []
     for vocal in vocals:
         if vocal["musicId"] != music_id:
             continue
-        variants = [
-            {
+        variants = []
+        for v in asset_variants:
+            if v["musicVocalId"] != vocal["id"]:
+                continue
+            vd = {
                 "id": v["id"],
                 "seq": v["seq"],
                 "asset_type": v["musicAssetType"],
                 "assetbundle_name": v["assetbundleName"],
             }
-            for v in asset_variants
-            if v["musicVocalId"] == vocal["id"]
-        ]
+            if v["musicAssetType"] == "jacket":
+                vab = v["assetbundleName"]
+                vd["jacket_url"] = (
+                    f"{asset_base_url}/pjsk_data/{region}/music/jacket/{vab}/{vab}.{image_type}"
+                )
+            variants.append(vd)
+
+        vab_name = vocal["assetbundleName"]
         music_vocals.append(
             {
                 "id": vocal["id"],
@@ -78,7 +86,9 @@ def _build_music(
                     }
                     for c in vocal["characters"]
                 ],
-                "assetbundle_name": vocal["assetbundleName"],
+                "assetbundle_name": vab_name,
+                "bgm_url": f"{asset_base_url}/pjsk_data/{region}/music/long/{vab_name}/{vab_name}.mp3",
+                "preview_url": f"{asset_base_url}/pjsk_data/{region}/music/short/{vab_name}/{vab_name}_short.mp3",
                 "published_at": vocal.get("archivePublishedAt"),
                 "variants": variants,
             }
@@ -119,13 +129,13 @@ def _build_music(
 def _build_music_simple(
     music: dict,
     difficulties: list,
-    base_url: str,
+    asset_base_url: str,
     region: str,
     image_type: Literal["webp", "png"],
 ) -> tuple[dict, int]:
     music_id = music["id"]
     ab_name = music["assetbundleName"]
-    jacket_url = f"{base_url}/api/pjsk_data/assets/music/jacket/{ab_name}/{ab_name}.{image_type}?region={region}"
+    jacket_url = f"{asset_base_url}/pjsk_data/{region}/music/jacket/{ab_name}/{ab_name}.{image_type}"
 
     return {
         "id": music_id,
@@ -173,6 +183,7 @@ async def get_musics_simple(
     request: Request,
     region: Literal["en", "jp"],
     image_type: Literal["webp", "png"] = "webp",
+    ignore_leak: bool = False,
 ):
     app: SbugaFastAPI = request.app
 
@@ -192,12 +203,12 @@ async def get_musics_simple(
         _build_music_simple(
             music=music,
             difficulties=difficulties,
-            base_url=app.base_url,
+            asset_base_url=app.s3_asset_base_url,
             region=region,
             image_type=image_type,
         )
         for music in musics
-        if not app.check_leak(music["publishedAt"])
+        if ignore_leak or not app.check_leak(music["publishedAt"])
     ]
 
     return {"musics": result}
@@ -274,6 +285,7 @@ async def get_musics(
     request: Request,
     region: Literal["en", "jp"],
     image_type: Literal["webp", "png"] = "webp",
+    ignore_leak: bool = False,
 ):
     app: SbugaFastAPI = request.app
 
@@ -317,12 +329,12 @@ async def get_musics(
             difficulties=difficulties,
             asset_variants=asset_variants,
             artists=artists,
-            base_url=app.base_url,
+            asset_base_url=app.s3_asset_base_url,
             region=region,
             image_type=image_type,
         )
         for music in musics
-        if not app.check_leak(music["publishedAt"])
+        if ignore_leak or not app.check_leak(music["publishedAt"])
     ]
 
     return {"musics": result}

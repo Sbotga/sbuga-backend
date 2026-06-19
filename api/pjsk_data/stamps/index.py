@@ -66,7 +66,7 @@ async def get_stamps(
         return ids
 
     def make_asset_url(path: str) -> str:
-        return f"{app.base_url}/api/pjsk_data/assets/{path}?region={region}"
+        return f"{app.s3_asset_base_url}/pjsk_data/{region}/{path}"
 
     stamps = [
         {

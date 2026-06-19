@@ -59,8 +59,8 @@ async def get_comics(
     comics = [
         {
             "title": tip["title"],
-            "image_url": app.base_url
-            + f"/api/pjsk_data/assets/comic/one_frame/{tip['assetbundleName']}.{image_type}?region={region}",
+            "image_url": app.s3_asset_base_url
+            + f"/pjsk_data/{region}/comic/one_frame/{tip['assetbundleName']}.{image_type}",
             "from_user_rank": tip["fromUserRank"],
             "to_user_rank": tip["toUserRank"],
         }
