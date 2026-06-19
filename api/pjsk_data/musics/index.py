@@ -6,6 +6,7 @@ from pydantic import BaseModel
 
 from helpers.erroring import ErrorDetailCode, ERROR_RESPONSE, COMMON_RESPONSES
 from helpers.converters import match_song
+from helpers.converter_maps import _song_maps
 
 router = APIRouter()
 
@@ -94,10 +95,16 @@ def _build_music(
             }
         )
 
+    region_map = _song_maps.get(region, {})
+    title_variants = list(
+        dict.fromkeys(key for key, (mid, _) in region_map.items() if mid == music_id)
+    )
+
     return {
         "id": music_id,
         "title": music["title"],
         "pronunciation": music.get("pronunciation"),
+        "title_variants": title_variants,
         "lyricist": music.get("lyricist"),
         "composer": music.get("composer"),
         "arranger": music.get("arranger"),
