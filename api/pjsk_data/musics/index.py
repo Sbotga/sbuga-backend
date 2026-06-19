@@ -68,7 +68,7 @@ def _build_music(
             if v["musicAssetType"] == "jacket":
                 vab = v["assetbundleName"]
                 vd["jacket_url"] = (
-                    f"{asset_base_url}/pjsk_data/{region}/music/jacket/{vab}/{vab}.{image_type}"
+                    f"{asset_base_url}/pjsk_data/{region}/music/jacket/{ab_name}/{vab}.{image_type}"
                 )
             variants.append(vd)
 
