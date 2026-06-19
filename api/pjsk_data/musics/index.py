@@ -267,8 +267,18 @@ async def get_musics_simple(
                                             }
                                         ],
                                         "assetbundle_name": "0001_01",
+                                        "bgm_url": "https://sbugaisthemostsbuga.sbuga.com/pjsk_data/en/music/long/0001_01/0001_01.mp3",
+                                        "preview_url": "https://sbugaisthemostsbuga.sbuga.com/pjsk_data/en/music/short/0001_01/0001_01_short.mp3",
                                         "published_at": 1233284400000,
-                                        "variants": [],
+                                        "variants": [
+                                            {
+                                                "id": 42,
+                                                "seq": 1,
+                                                "asset_type": "jacket",
+                                                "assetbundle_name": "jacket_s_001_v2",
+                                                "jacket_url": "https://sbugaisthemostsbuga.sbuga.com/pjsk_data/en/music/jacket/jacket_s_001_v2/jacket_s_001_v2.png",
+                                            }
+                                        ],
                                     }
                                 ],
                             }
