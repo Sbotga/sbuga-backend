@@ -29,6 +29,9 @@ unicorn
 # s3
 aioboto3
 
+# background generation
+git+https://github.com/UntitledCharts/pjsekai-background-gen-pillow-upd
+
 # bundle extraction stuff
 UnityPy
 wannacri # NOTE: requires vgmstream
