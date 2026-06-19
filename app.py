@@ -132,8 +132,6 @@ async def startup_event():
         print("Routes loaded!")
 
 
-
-
 async def start_fastapi():
     uvicorn_config = uvicorn.Config(
         "app:app",

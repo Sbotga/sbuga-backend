@@ -56,7 +56,7 @@ class PJSKClient:
         app_version: str,
         app_hash: str,
         app_platform: str = "android",
-        unity_version: str = "2022.3.21f1",
+        unity_version: str = "2022.3.62f2",
         num_users: int = 5,
         ab_version: str | None = None,
     ):

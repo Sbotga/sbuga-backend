@@ -107,6 +107,7 @@ def _build_music(
         "is_newly_written": music.get("isNewlyWrittenMusic"),
         "is_full_length": music.get("isFullLength"),
         "filler_sec": music.get("fillerSec"),
+        "sec_for_music_score_maker": music.get("secForMusicScoreMaker"),
         "jacket_url": jacket_url,
         "collaboration": collab_label,
         "original_video": original_video,

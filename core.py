@@ -126,6 +126,7 @@ class SbugaFastAPI(FastAPI):
         asyncio.create_task(self._set_tw_pjsk_client())
         asyncio.create_task(self._set_kr_pjsk_client())
         # asyncio.create_task(self._set_cn_pjsk_client()) # NOTE: does not work
+        asyncio.create_task(self._periodic_update_check())
 
     async def _client_ready(self):
         global _clients_ready
@@ -135,6 +136,28 @@ class SbugaFastAPI(FastAPI):
                 asyncio.create_task(
                     rebuild_maps(self.pjsk_clients["jp"], self.pjsk_clients["en"], self)
                 )
+
+    async def _periodic_update_check(self):
+        await asyncio.sleep(60)  # wait for initial startup to finish
+        while True:
+            await asyncio.sleep(1800)  # 30 minutes
+            for region in ["en", "jp"]:
+                client = self.pjsk_clients.get(region)
+                if not client or not client.is_authenticated:
+                    continue
+                try:
+                    get_version = _get_version_fns[region]
+                    data = await get_version()
+                    if (
+                        data["app_version"] != client.app_version
+                        or data["app_hash"] != client.app_hash
+                    ):
+                        print(f"[{region}] Version changed, recreating client")
+                        from pjsk_api.requests.request_handling import _recreate_client
+
+                        await _recreate_client(client, self)
+                except Exception as e:
+                    print(f"[{region}] Periodic update check failed: {e}")
 
     async def _set_en_pjsk_client(self):
         data = await get_en()
