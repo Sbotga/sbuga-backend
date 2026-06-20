@@ -39,6 +39,7 @@ def _build_music(
     music_tags = [t["musicTag"] for t in tags if t["musicId"] == music_id]
     original_video = original["videoLink"] if original else None
     collab_label = collaboration["label"] if collaboration else None
+    collab_id = collaboration["id"] if collaboration else None
     artist = next((a for a in artists if a["id"] == music.get("creatorArtistId")), None)
 
     padded_id = f"{music_id:04d}"
@@ -156,6 +157,7 @@ def _build_music(
         "background_v1_url": background_v1_url,
         "background_v3_url": background_v3_url,
         "collaboration": collab_label,
+        "collaboration_id": collab_id,
         "original_video": original_video,
         "difficulties": music_difficulties,
         "vocals": music_vocals,
