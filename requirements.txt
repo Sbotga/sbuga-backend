@@ -35,6 +35,7 @@ git+https://github.com/UntitledCharts/pjsekai-background-gen-pillow-upd
 # bundle extraction stuff
 UnityPy
 wannacri # NOTE: requires vgmstream
+PyCriCodecsEx # fallback for vgmstream - NOTE: requires ffmpeg for wav -> mp3
 ffmpeg-python # NOTE: requires ffmpeg
 
 # chart generation
