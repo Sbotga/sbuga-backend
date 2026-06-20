@@ -12,7 +12,7 @@ Backend API for [sbuga.com](https://sbuga.com), a **WIP** website for minigames,
 | Cloudflare R2 | Asset storage |
 | Resend | Email sending |
 | ffmpeg | Audio file converter |
-| vgmstream | Decode .usm files |
+| vgmstream | Decode .usm and .acb files |
 | ChromeDriver + Selenium | SVG to PNG |
 
 ## Credits
