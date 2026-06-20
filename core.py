@@ -138,9 +138,9 @@ class SbugaFastAPI(FastAPI):
                 )
 
     async def _periodic_update_check(self):
-        await asyncio.sleep(60)  # wait for initial startup to finish
+        await asyncio.sleep(60)
         while True:
-            await asyncio.sleep(1800)  # 30 minutes
+            await asyncio.sleep(1800)
             for region in ["en", "jp"]:
                 client = self.pjsk_clients.get(region)
                 if not client or not client.is_authenticated:
