@@ -42,15 +42,21 @@ async def main():
             print(f"[{region}] removed {len(removed)} entries from bundlehashes")
 
         assets_path = data_path / "assets"
+        tmp_path = data_path / ".bundle_tmp"
         deleted_dirs = 0
+        deleted_tmp = 0
         for p in PATHS:
-            d = assets_path / p
-            if d.exists():
-                for child in d.iterdir():
-                    if child.is_dir():
-                        shutil.rmtree(child)
-                        deleted_dirs += 1
-        print(f"[{region}] deleted {deleted_dirs} extracted directories")
+            for base in [assets_path, tmp_path]:
+                d = base / p
+                if d.exists():
+                    for child in d.iterdir():
+                        if child.is_dir():
+                            shutil.rmtree(child)
+                            deleted_dirs += 1
+                        elif child.is_file():
+                            child.unlink()
+                            deleted_tmp += 1
+        print(f"[{region}] deleted {deleted_dirs} dirs, {deleted_tmp} tmp files")
 
         like_clauses = " OR ".join(f"bundle_name LIKE '{p}/%'" for p in PATHS)
         async with pool.acquire() as conn:
