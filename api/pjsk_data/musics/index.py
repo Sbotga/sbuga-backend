@@ -41,11 +41,13 @@ def _build_music(
     collab_label = collaboration["label"] if collaboration else None
     artist = next((a for a in artists if a["id"] == music.get("creatorArtistId")), None)
 
+    padded_id = f"{music_id:04d}"
     music_difficulties = [
         {
             "difficulty": d["musicDifficulty"],
             "play_level": d["playLevel"],
             "total_note_count": d["totalNoteCount"],
+            "chart_url": f"{asset_base_url}/pjsk_data/{region}/music/music_score/{padded_id}_01/{d['musicDifficulty']}.txt",
         }
         for d in difficulties
         if d["musicId"] == music_id
@@ -53,6 +55,12 @@ def _build_music(
 
     ab_name = music["assetbundleName"]
     jacket_url = f"{asset_base_url}/pjsk_data/{region}/music/jacket/{ab_name}/{ab_name}.{image_type}"
+    background_v1_url = (
+        f"{asset_base_url}/pjsk_data/{region}/music/jacket/{ab_name}/{ab_name}_v1.png"
+    )
+    background_v3_url = (
+        f"{asset_base_url}/pjsk_data/{region}/music/jacket/{ab_name}/{ab_name}_v3.png"
+    )
 
     music_vocals = []
     for vocal in vocals:
@@ -72,6 +80,12 @@ def _build_music(
                 vab = v["assetbundleName"]
                 vd["jacket_url"] = (
                     f"{asset_base_url}/pjsk_data/{region}/music/jacket/{ab_name}/{vab}.{image_type}"
+                )
+                vd["background_v1_url"] = (
+                    f"{asset_base_url}/pjsk_data/{region}/music/jacket/{ab_name}/{vab}_v1.png"
+                )
+                vd["background_v3_url"] = (
+                    f"{asset_base_url}/pjsk_data/{region}/music/jacket/{ab_name}/{vab}_v3.png"
                 )
             variants.append(vd)
 
@@ -137,6 +151,8 @@ def _build_music(
         "filler_sec": music.get("fillerSec"),
         "sec_for_music_score_maker": music.get("secForMusicScoreMaker"),
         "jacket_url": jacket_url,
+        "background_v1_url": background_v1_url,
+        "background_v3_url": background_v3_url,
         "collaboration": collab_label,
         "original_video": original_video,
         "difficulties": music_difficulties,
@@ -278,6 +294,7 @@ async def get_musics_simple(
                                         "difficulty": "easy",
                                         "play_level": 5,
                                         "total_note_count": 220,
+                                        "chart_url": "https://sbugaisthemostsbuga.sbuga.com/pjsk_data/en/music/music_score/0001_01/easy.txt",
                                     }
                                 ],
                                 "vocals": [
