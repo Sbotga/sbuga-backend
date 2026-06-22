@@ -47,9 +47,12 @@ async def main():
                 missing_bundles.append(bundle_name)
                 continue
             mp3s = list(bundle_dir.glob("*.mp3"))
-            has_silence_removed = any("_silence_removed" in f.name for f in mp3s)
-            if not mp3s or not has_silence_removed:
+            if not mp3s:
                 missing_bundles.append(bundle_name)
+                continue
+            if bundle_name.startswith("music/long/"):
+                if not any("_silence_removed" in f.name for f in mp3s):
+                    missing_bundles.append(bundle_name)
 
         if not missing_bundles:
             print(f"[{region}] all audio bundles have mp3s")
