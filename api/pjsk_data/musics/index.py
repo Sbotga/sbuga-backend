@@ -108,7 +108,6 @@ def _build_music(
                 "bgm_url": f"{asset_base_url}/pjsk_data/{region}/music/long/{vab_name}/{vab_name}.mp3",
                 "bgm_nosil_url": f"{asset_base_url}/pjsk_data/{region}/music/long/{vab_name}/{vab_name}_silence_removed.mp3",
                 "preview_url": f"{asset_base_url}/pjsk_data/{region}/music/short/{vab_name}/{vab_name}_short.mp3",
-                "preview_nosil_url": f"{asset_base_url}/pjsk_data/{region}/music/short/{vab_name}/{vab_name}_short_silence_removed.mp3",
                 "published_at": vocal.get("archivePublishedAt"),
                 "variants": variants,
             }
