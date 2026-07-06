@@ -1,10 +1,10 @@
-"""Invalidate and regenerate all chart views.
+"""Invalidate all chart views so they re-render on the next asset cycle.
 
-Charts render into the score bundle dir
-(`assets/music/music_score/{padded}_01/{difficulty}.png`) and ride the normal
-per-bundle S3 sync. This deletes every rendered chart PNG, re-renders them from
-the already-extracted `.txt` scores (no re-download), and clears the S3 sync
-state for those bundles so the next server sync re-uploads them to R2.
+Charts render into the score bundle dir at extraction time (see
+asset_handlers/charts.py) and ride the normal per-bundle S3 sync. This removes
+the `music/music_score` bundle hashes, deletes the extracted score dirs, and
+clears their S3 sync state — so the next server run re-downloads, re-extracts
+(which re-renders the charts), and re-uploads them. Nothing is generated here.
 
     python -m scripts.invalidate_charts            # all regions
     python -m scripts.invalidate_charts en jp      # specific regions
@@ -12,6 +12,7 @@ state for those bundles so the next server sync re-uploads them to R2.
 
 import asyncio
 import json
+import shutil
 import sys
 from pathlib import Path
 
@@ -19,17 +20,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import asyncpg
 
-from pjsk_api.asset_handlers.charts import generate_views
-
-DEFAULT_REGIONS = ["en", "jp", "tw", "kr"]
+PATHS = ["music/music_score"]
+DEFAULT_REGIONS = ["en", "jp"]
 
 
 async def main(regions: list[str]) -> None:
     from helpers.config_loader import get_config
 
     config = get_config()
-    s3_base = getattr(config.s3, "base_url", None)
-
     pool = await asyncpg.create_pool(
         host=config.psql.host,
         user=config.psql.user,
@@ -40,36 +38,41 @@ async def main(regions: list[str]) -> None:
 
     for region in regions:
         data_path = Path("pjsk_api") / "data" / region
-        score_root = data_path / "assets" / "music" / "music_score"
-        master_path = data_path / "master" / "musics.json"
+        hashes_path = data_path / ".bundlehashes.json"
 
-        if not master_path.exists() or not score_root.exists():
-            print(f"[{region}] no scores/masterdata, skipping")
-            continue
+        if hashes_path.exists():
+            hashes: dict[str, str] = json.loads(hashes_path.read_text("utf8"))
+            removed = [k for k in hashes if any(k.startswith(p + "/") for p in PATHS)]
+            for k in removed:
+                del hashes[k]
+            hashes_path.write_text(json.dumps(hashes, ensure_ascii=False), "utf8")
+            print(f"[{region}] removed {len(removed)} entries from bundlehashes")
 
+        assets_path = data_path / "assets"
+        tmp_path = data_path / ".bundle_tmp"
         deleted = 0
-        for ext in ("png", "webp", "svg"):
-            for f in score_root.glob(f"*/*.{ext}"):
-                f.unlink()
-                deleted += 1
-        print(f"[{region}] deleted {deleted} chart files")
+        for p in PATHS:
+            for base in [assets_path, tmp_path]:
+                d = base / p
+                if d.exists():
+                    for child in d.iterdir():
+                        if child.is_dir():
+                            shutil.rmtree(child)
+                            deleted += 1
+                        elif child.is_file():
+                            child.unlink()
+        print(f"[{region}] deleted {deleted} score dirs")
 
-        musics = json.loads(master_path.read_text(encoding="utf8"))
-        count = await generate_views(
-            data_path, region, s3_base, musics, padded_ids=None, force=True
-        )
-        print(f"[{region}] regenerated {count} chart views")
-
+        like = " OR ".join(f"bundle_name LIKE '{p}/%'" for p in PATHS)
         async with pool.acquire() as conn:
             result = await conn.execute(
-                "DELETE FROM s3_sync_hashes_v2 WHERE region = $1 "
-                "AND bundle_name LIKE 'music/music_score/%'",
+                f"DELETE FROM s3_sync_hashes_v2 WHERE region = $1 AND ({like})",
                 region,
             )
-        print(f"[{region}] cleared S3 sync state: {result}")
+            print(f"[{region}] cleared S3 sync state: {result}")
 
     await pool.close()
-    print("done. restart sbuga-backend (or wait for next asset cycle) to re-upload.")
+    print("done. restart sbuga-backend to re-download, re-render, and re-upload.")
 
 
 if __name__ == "__main__":
