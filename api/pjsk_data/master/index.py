@@ -43,7 +43,7 @@ ALLOWED_FILES = {
 async def get_master_file(
     request: Request,
     file: str,
-    region: Literal["en", "jp"],
+    region: Literal["en", "jp", "tw", "kr"],
 ):
     app: SbugaFastAPI = request.app
 

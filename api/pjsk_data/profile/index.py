@@ -12,6 +12,7 @@ router = APIRouter()
 cached: dict[str, dict] = {}  # key: "{region}:{user_id}"
 locks: dict[str, asyncio.Lock] = {}
 CACHE_TTL = 300
+FRESH_TTL = 10  # floor for fresh=true requests so one profile can't be hammered
 
 
 def get_lock(key: str) -> asyncio.Lock:
@@ -33,7 +34,8 @@ def _cleanup_cache():
     summary="PJSK user profile",
     description=(
         "Returns a PJSK user profile by ID. "
-        "Data is cached for **5 minutes** - `next_available_update` indicates when fresh data will be available."
+        "Data is cached for **5 minutes** - `next_available_update` indicates when fresh data will be available. "
+        "Pass `fresh=true` to bypass the cache (rate-floored to once per 10s per profile), e.g. for account-link verification."
     ),
     responses={
         200: {
@@ -60,22 +62,24 @@ async def get_profile(
     request: Request,
     user_id: int,
     region: Literal["en", "jp", "tw", "kr"],
+    fresh: bool = False,
 ):
     app: SbugaFastAPI = request.app
 
     asyncio.create_task(asyncio.to_thread(_cleanup_cache))
 
     cache_key = f"{region}:{user_id}"
+    ttl = FRESH_TTL if fresh else CACHE_TTL
 
     prev = cached.get(cache_key)
-    if prev and prev.get("updated", 0) + CACHE_TTL > time.time():
+    if prev and prev.get("updated", 0) + ttl > time.time():
         return prev
 
     lock = get_lock(cache_key)
 
     async with lock:
         prev = cached.get(cache_key)
-        if prev and prev.get("updated", 0) + CACHE_TTL > time.time():
+        if prev and prev.get("updated", 0) + ttl > time.time():
             return prev
 
         client = app.pjsk_clients.get(region)

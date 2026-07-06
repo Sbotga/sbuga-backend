@@ -10,6 +10,10 @@ from helpers.converter_maps import _song_maps
 
 router = APIRouter()
 
+# tw/kr assets are not extracted/uploaded (subset of jp, same bundle names) —
+# their asset URLs point at the jp tree instead.
+ASSET_REGION = {"tw": "jp", "kr": "jp"}
+
 
 class MusicSearchBody(BaseModel):
     query: str
@@ -35,6 +39,8 @@ def _build_music(
     image_type: Literal["webp", "png"],
 ) -> dict:
     music_id = music["id"]
+    map_region = region
+    region = ASSET_REGION.get(region, region)
 
     music_tags = [t["musicTag"] for t in tags if t["musicId"] == music_id]
     original_video = original["videoLink"] if original else None
@@ -113,7 +119,7 @@ def _build_music(
             }
         )
 
-    region_map = _song_maps.get(region, {})
+    region_map = _song_maps.get(map_region, {})
     title_variants = list(
         dict.fromkeys(key for key, (mid, _) in region_map.items() if mid == music_id)
     )
@@ -180,6 +186,7 @@ def _build_music_simple(
 ) -> tuple[dict, int]:
     music_id = music["id"]
     ab_name = music["assetbundleName"]
+    region = ASSET_REGION.get(region, region)
     jacket_url = f"{asset_base_url}/pjsk_data/{region}/music/jacket/{ab_name}/{ab_name}.{image_type}"
 
     return {
@@ -226,7 +233,7 @@ def _build_music_simple(
 )
 async def get_musics_simple(
     request: Request,
-    region: Literal["en", "jp"],
+    region: Literal["en", "jp", "tw", "kr"],
     image_type: Literal["webp", "png"] = "webp",
     ignore_leak: bool = False,
 ):
@@ -347,7 +354,7 @@ async def get_musics_simple(
 )
 async def get_musics(
     request: Request,
-    region: Literal["en", "jp"],
+    region: Literal["en", "jp", "tw", "kr"],
     image_type: Literal["webp", "png"] = "webp",
     ignore_leak: bool = False,
 ):

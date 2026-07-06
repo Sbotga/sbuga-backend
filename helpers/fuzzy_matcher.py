@@ -42,6 +42,7 @@ def fuzzy_match_to_dict_key_partial(
 
     best_match = None
     best_score = 0
+    best_distance = 10**9
 
     for original_key, preprocessed_key in preprocessed_keys.items():
         similarity = fuzz.token_set_ratio(input_str, preprocessed_key)
@@ -51,12 +52,12 @@ def fuzzy_match_to_dict_key_partial(
             similarity -= (edit_distance - 5) * 5
 
         if similarity > best_score or (
-            similarity == best_score
-            and edit_distance < Levenshtein.distance(input_str, best_match or "")
+            similarity == best_score and edit_distance < best_distance
         ):
             if similarity >= sensitivity:
                 best_match = original_key
                 best_score = similarity
+                best_distance = edit_distance
 
     return best_match
 
@@ -123,7 +124,7 @@ def fuzzy_match_multi(
     input_str = preprocess(input_str)
     preprocessed_keys = {key: preprocess(key) for key in dictionary.keys()}
 
-    scores: list[tuple[str, float]] = []
+    scores: list[tuple[str, float, int]] = []
 
     for original_key, preprocessed_key in preprocessed_keys.items():
         similarity = fuzz.token_set_ratio(input_str, preprocessed_key)
@@ -133,7 +134,9 @@ def fuzzy_match_multi(
             similarity -= (edit_distance - 5) * 5
 
         if similarity >= sensitivity:
-            scores.append((original_key, similarity))
+            scores.append((original_key, similarity, edit_distance))
 
-    scores.sort(key=lambda x: x[1], reverse=True)
-    return [key for key, _ in scores[:limit]]
+    # token_set_ratio gives 100 to token-subset matches ("meru" vs "meru to"),
+    # so ties are broken by edit distance: exact/closest keys win.
+    scores.sort(key=lambda x: (-x[1], x[2]))
+    return [key for key, _, _ in scores[:limit]]

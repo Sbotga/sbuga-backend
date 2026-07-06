@@ -32,7 +32,7 @@ router = APIRouter()
 )
 async def get_version(
     request: Request,
-    region: Literal["en", "jp"] = "en",
+    region: Literal["en", "jp", "tw", "kr"] = "en",
 ):
     app: SbugaFastAPI = request.app
 
