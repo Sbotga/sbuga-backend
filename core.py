@@ -159,6 +159,17 @@ class SbugaFastAPI(FastAPI):
                 except Exception as e:
                     print(f"[{region}] Periodic update check failed: {e}")
 
+            # ROW sessions/tokens expire if left idle — proactively re-auth every
+            # cycle so they refresh before expiry (dead accounts get recreated).
+            for region in ["tw", "kr"]:
+                client = self.pjsk_clients.get(region)
+                if not client or not client.is_authenticated:
+                    continue
+                try:
+                    await authenticate_client_row(client)
+                except Exception as e:
+                    print(f"[{region}] Periodic ROW re-auth failed: {e}")
+
     async def _set_en_pjsk_client(self):
         data = await get_en()
         client = PJSKClient(
