@@ -43,6 +43,11 @@ def _build_music(
     region = ASSET_REGION.get(region, region)
 
     music_tags = [t["musicTag"] for t in tags if t["musicId"] == music_id]
+    # nuverse (tw/kr) masterdata wraps categories: [{"musicCategoryName": "mv"}]
+    categories = [
+        c["musicCategoryName"] if isinstance(c, dict) else c
+        for c in music.get("categories", [])
+    ]
     original_video = original["videoLink"] if original else None
     collab_label = collaboration["label"] if collaboration else None
     collab_id = collaboration["id"] if collaboration else None
@@ -150,7 +155,7 @@ def _build_music(
             if artist
             else None
         ),
-        "categories": music.get("categories", []),
+        "categories": categories,
         "tags": music_tags,
         "published_at": music.get("publishedAt"),
         "released_at": music.get("releasedAt"),
