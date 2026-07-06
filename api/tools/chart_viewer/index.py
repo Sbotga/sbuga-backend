@@ -3,13 +3,9 @@ from fastapi.responses import FileResponse, StreamingResponse
 from core import SbugaFastAPI
 from helpers.erroring import ErrorDetailCode, ERROR_RESPONSE, COMMON_RESPONSES
 from helpers.mirror_chart import mirror
+from pjsk_api.asset_handlers.charts import generate_svg, generate_png_subprocess
 from typing import Literal
-from pathlib import Path
-from threading import Lock
 import asyncio
-import subprocess
-import sys
-import sekaiworld.scores as scores
 
 router = APIRouter()
 
@@ -27,48 +23,6 @@ async def _get_chart_lock(key: str) -> asyncio.Lock:
 async def _release_chart_lock(key: str) -> None:
     async with _chart_locks_meta:
         _chart_locks.pop(key, None)
-
-
-def _generate_svg(
-    score_path: Path,
-    svg_path: Path,
-    music_title: str,
-    jacket_path: str,
-    difficulty: str,
-) -> None:
-    score = scores.Score.open(str(score_path), encoding="utf-8")
-    score.meta.title = music_title
-    score.meta.jacket = jacket_path
-    score.meta.difficulty = difficulty
-    drawing = scores.Drawing(score)
-    svg = drawing.svg()
-    svg_path.parent.mkdir(parents=True, exist_ok=True)
-    svg.saveas(str(svg_path))
-
-
-def _generate_png_subprocess(svg_path: Path, png_path: Path) -> None:
-    command = [sys.executable, "helpers/svg_to_png.py", str(svg_path), str(png_path)]
-
-    kwargs = dict(
-        stdin=subprocess.DEVNULL,
-        stdout=subprocess.DEVNULL,
-        stderr=None,
-        close_fds=True,
-    )
-
-    if sys.platform == "win32":
-        kwargs["creationflags"] = subprocess.CREATE_NO_WINDOW
-
-    proc = subprocess.Popen(command, **kwargs)
-    try:
-        proc.wait(timeout=600)
-        if proc.returncode != 0:
-            raise RuntimeError(
-                f"svg_to_png subprocess failed with code {proc.returncode}"
-            )
-    except subprocess.TimeoutExpired:
-        proc.kill()
-        raise RuntimeError("svg_to_png subprocess timed out")
 
 
 @router.get(
@@ -153,7 +107,7 @@ async def get_chart(
 
                 try:
                     await app.run_blocking(
-                        _generate_svg,
+                        generate_svg,
                         score_path,
                         svg_path,
                         music_title,
@@ -167,7 +121,7 @@ async def get_chart(
                     )
 
                 try:
-                    await app.run_blocking(_generate_png_subprocess, svg_path, png_path)
+                    await app.run_blocking(generate_png_subprocess, svg_path, png_path)
                 except Exception:
                     raise HTTPException(
                         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
