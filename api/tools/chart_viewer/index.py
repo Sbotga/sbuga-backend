@@ -3,7 +3,7 @@ from fastapi.responses import FileResponse, StreamingResponse
 from core import SbugaFastAPI
 from helpers.erroring import ErrorDetailCode, ERROR_RESPONSE, COMMON_RESPONSES
 from helpers.mirror_chart import mirror
-from pjsk_api.asset_handlers.charts import generate_svg, generate_png_subprocess
+from pjsk_api.asset_handlers.charts import generate_chart_view, score_dir, chart_png
 from typing import Literal
 import asyncio
 
@@ -73,18 +73,8 @@ async def get_chart(
         + f"/pjsk_data/{region}/music/jacket/"
         + f"{music['assetbundleName']}/{music['assetbundleName']}.png"
     )
-    score_path = (
-        client.data_path
-        / "assets"
-        / "music"
-        / "music_score"
-        / f"{padded_id}_01"
-        / f"{difficulty}.txt"
-    )
-    svg_path = (
-        client.data_path / "music_score_view" / f"{padded_id}_01" / f"{difficulty}.svg"
-    )
-    png_path = svg_path.with_suffix(".png")
+    score_path = score_dir(client.data_path, padded_id) / f"{difficulty}.txt"
+    png_path = chart_png(client.data_path, padded_id, difficulty)
 
     if not score_path.exists():
         raise HTTPException(
@@ -107,21 +97,13 @@ async def get_chart(
 
                 try:
                     await app.run_blocking(
-                        generate_svg,
+                        generate_chart_view,
                         score_path,
-                        svg_path,
+                        png_path,
                         music_title,
                         jacket_path,
-                        difficulty.upper(),
+                        difficulty,
                     )
-                except Exception:
-                    raise HTTPException(
-                        status_code=status.HTTP_404_NOT_FOUND,
-                        detail=ErrorDetailCode.NotFound.value,
-                    )
-
-                try:
-                    await app.run_blocking(generate_png_subprocess, svg_path, png_path)
                 except Exception:
                     raise HTTPException(
                         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
