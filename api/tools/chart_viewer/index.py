@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Request, HTTPException, status
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import StreamingResponse, RedirectResponse
 from core import SbugaFastAPI
 from helpers.erroring import ErrorDetailCode, ERROR_RESPONSE, COMMON_RESPONSES
 from helpers.mirror_chart import mirror
-from pjsk_api.asset_handlers.charts import generate_chart_view, score_dir, chart_png
+from pjsk_api.asset_handlers.charts import generate_chart_view, score_dir, chart_file
 from typing import Literal
 import asyncio
 
@@ -29,13 +29,15 @@ async def _release_chart_lock(key: str) -> None:
     "",
     summary="Get chart image",
     description=(
-        "Returns a PNG image of the chart for a given music ID, difficulty, and region. "
-        "If the chart has not been generated yet, it will be generated on first request — this may take a while. "
-        "Subsequent requests are served from cache. "
-        "`mirrored` flips the lanes horizontally and is never cached."
+        "Chart image for a music ID / difficulty / region. Un-mirrored charts "
+        "302-redirect to the pre-rendered file on R2 (in the requested "
+        "`image_type`). `mirrored` flips the lanes horizontally — those are "
+        "loaded and edited per-request (never cached). Charts not yet rendered "
+        "are generated on first request."
     ),
     responses={
-        200: {"description": "Chart PNG image."},
+        200: {"description": "Chart image (mirrored)."},
+        307: {"description": "Redirect to the chart on R2 (un-mirrored)."},
         404: {
             "description": f"Chart or music not found. (`{ErrorDetailCode.NotFound}`)",
             **ERROR_RESPONSE,
@@ -50,6 +52,7 @@ async def get_chart(
     difficulty: Literal["easy", "normal", "hard", "expert", "master", "append"],
     region: Literal["en", "jp"],
     mirrored: bool = False,
+    image_type: Literal["webp", "png"] = "png",
 ):
     app: SbugaFastAPI = request.app
 
@@ -61,6 +64,15 @@ async def get_chart(
         )
 
     padded_id = str(music_id).zfill(4)
+
+    # un-mirrored: redirect to the pre-rendered chart on R2
+    if not mirrored:
+        return RedirectResponse(
+            f"{app.s3_asset_base_url}/pjsk_data/{region}"
+            f"/music/music_score/{padded_id}_01/{difficulty}.{image_type}"
+        )
+
+    # mirrored: load the local chart (rendering it if missing) and flip it
     musics = await client.get_master("musics")
     music = next((m for m in musics if m["id"] == music_id), None)
     if not music:
@@ -74,7 +86,7 @@ async def get_chart(
         + f"{music['assetbundleName']}/{music['assetbundleName']}.png"
     )
     score_path = score_dir(client.data_path, padded_id) / f"{difficulty}.txt"
-    png_path = chart_png(client.data_path, padded_id, difficulty)
+    png_path = chart_file(client.data_path, padded_id, difficulty, "png")
 
     if not score_path.exists():
         raise HTTPException(
@@ -85,22 +97,15 @@ async def get_chart(
     if not png_path.exists():
         lock_key = f"{region}:{padded_id}:{difficulty}"
         chart_lock = await _get_chart_lock(lock_key)
-
         async with chart_lock:
             if not png_path.exists():
-                try:
-                    musics: list = await client.get_master("musics")
-                    music = next((m for m in musics if m["id"] == music_id), None)
-                    music_title = music["title"] if music else ""
-                except Exception:
-                    music_title = ""
-
                 try:
                     await app.run_blocking(
                         generate_chart_view,
                         score_path,
-                        png_path,
-                        music_title,
+                        score_dir(client.data_path, padded_id),
+                        difficulty,
+                        music["title"],
                         jacket_path,
                         difficulty,
                     )
@@ -109,11 +114,7 @@ async def get_chart(
                         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                         detail=ErrorDetailCode.InternalServerError.value,
                     )
-
         await _release_chart_lock(lock_key)
 
-    if mirrored:
-        mirrored_bytes = await app.run_blocking(mirror, str(png_path))
-        return StreamingResponse(mirrored_bytes, media_type="image/png")
-
-    return FileResponse(png_path, media_type="image/png")
+    mirrored_bytes = await app.run_blocking(mirror, str(png_path))
+    return StreamingResponse(mirrored_bytes, media_type="image/png")

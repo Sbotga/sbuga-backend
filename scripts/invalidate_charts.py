@@ -48,10 +48,11 @@ async def main(regions: list[str]) -> None:
             continue
 
         deleted = 0
-        for png in score_root.glob("*/*.png"):
-            png.unlink()
-            deleted += 1
-        print(f"[{region}] deleted {deleted} chart PNGs")
+        for ext in ("png", "webp", "svg"):
+            for f in score_root.glob(f"*/*.{ext}"):
+                f.unlink()
+                deleted += 1
+        print(f"[{region}] deleted {deleted} chart files")
 
         musics = json.loads(master_path.read_text(encoding="utf8"))
         count = await generate_views(
