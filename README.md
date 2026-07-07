@@ -13,7 +13,7 @@ Backend API for [sbuga.com](https://sbuga.com), a **WIP** website for minigames,
 | Resend | Email sending |
 | ffmpeg | Audio file converter |
 | vgmstream | Decode .usm and .acb files |
-| ChromeDriver + Selenium | SVG to PNG |
+| [pjsekai-scores](https://github.com/Sbotga/pjsekai-scores) | Chart PNG rendering |
 
 ## Credits
 
@@ -28,7 +28,7 @@ Parts of this project, located under `pjsk_api/`, are hidden from the public as 
 2. Get a copy of the hidden code...
 3. Fill out the config accordingly (setting up any external services as required).
 4. Install all requirements into a virtual environment. (NOTE: NEEDS G++ COMPILER!)
-5. Install vgmstream, ffmpeg, and ChromeDriver to path.
+5. Install vgmstream and ffmpeg to path.
 6. Setup the database `python -m scripts.database_setup`
 7. SBUGA!
 
@@ -50,13 +50,6 @@ sudo mv vgmstream /usr/local/lib/vgmstream
 sudo ln -s /usr/local/lib/vgmstream/vgmstream-cli /usr/local/bin/vgmstream-cli
 # ffmpeg
 sudo apt install ffmpeg -y
-```
-
-### Chromedriver
-```bash
-wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-sudo apt install ./google-chrome-stable_current_amd64.deb
-sudo apt install chromium-chromedriver
 ```
 
 ### Unidic (770mb)

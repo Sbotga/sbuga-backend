@@ -38,8 +38,7 @@ wannacri # NOTE: requires vgmstream
 PyCriCodecsEx # fallback for vgmstream - NOTE: requires ffmpeg for wav -> mp3
 ffmpeg-python # NOTE: requires ffmpeg
 
-# chart generation
-selenium
+# chart generation (also numpy, used by helpers/mirror_chart.py)
 numpy
 git+https://github.com/Sbotga/pjsekai-scores
 

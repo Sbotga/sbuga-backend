@@ -3,7 +3,12 @@ from fastapi.responses import StreamingResponse, RedirectResponse
 from core import SbugaFastAPI
 from helpers.erroring import ErrorDetailCode, ERROR_RESPONSE, COMMON_RESPONSES
 from helpers.mirror_chart import mirror
-from pjsk_api.asset_handlers.charts import generate_chart_view, score_dir, chart_file
+from pjsk_api.asset_handlers.charts import (
+    chart_file,
+    generate_chart_view,
+    jacket_source,
+    score_dir,
+)
 from typing import Literal
 import asyncio
 
@@ -80,11 +85,7 @@ async def get_chart(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=ErrorDetailCode.NotFound.value,
         )
-    jacket_path = str(
-        app.s3_asset_base_url
-        + f"/pjsk_data/{region}/music/jacket/"
-        + f"{music['assetbundleName']}/{music['assetbundleName']}.png"
-    )
+    jacket_path = jacket_source(client.data_path, app.s3_asset_base_url, region, music)
     score_path = score_dir(client.data_path, padded_id) / f"{difficulty}.txt"
     png_path = chart_file(client.data_path, padded_id, difficulty, "png")
 
