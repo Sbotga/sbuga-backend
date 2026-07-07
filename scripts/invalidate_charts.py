@@ -1,9 +1,4 @@
-"""Invalidate chart views everywhere for a full re-render.
-
-Deletes rendered chart files locally, deletes them from R2, and clears the
-`s3_sync_hashes_v2` rows for score bundles so the next sync re-uploads each
-bundle with its freshly rendered charts. Also drops the legacy `chart_hashes`
-table. On the next asset cycle the server re-renders and re-syncs everything.
+"""Invalidate charts everywhere for a full regeneration.
 
 Run from the repo root (needs config.yml):
 
@@ -12,6 +7,7 @@ Run from the repo root (needs config.yml):
 """
 
 import asyncio
+import json
 import sys
 from pathlib import Path
 
@@ -24,6 +20,20 @@ from helpers.config_loader import get_config
 
 DEFAULT_REGIONS = ["en", "jp"]
 CHART_EXTS = (".png", ".webp", ".svg")
+
+
+def _clear_bundle_hashes(region: str) -> int:
+    """Forget the score bundles so the next cycle re-downloads + re-extracts
+    them (chart rendering happens inside that extraction)."""
+    hashes_path = Path("pjsk_api") / "data" / region / ".bundlehashes.json"
+    if not hashes_path.exists():
+        return 0
+    hashes: dict[str, str] = json.loads(hashes_path.read_text("utf8"))
+    stale = [name for name in hashes if name.startswith("music/music_score/")]
+    for name in stale:
+        del hashes[name]
+    hashes_path.write_text(json.dumps(hashes), "utf8")
+    return len(stale)
 
 
 def _delete_local(region: str) -> int:
@@ -79,6 +89,9 @@ async def main(regions: list[str]) -> None:
     async with session.resource("s3", endpoint_url=config.s3.endpoint) as s3:
         bucket = await s3.Bucket(config.s3.bucket_name)
         for region in regions:
+            cleared = _clear_bundle_hashes(region)
+            print(f"[{region}] forgot {cleared} score bundle hashes (will re-extract)")
+
             local = _delete_local(region)
             print(f"[{region}] deleted {local} local chart files")
 
@@ -100,7 +113,9 @@ async def main(regions: list[str]) -> None:
         await conn.execute("DROP TABLE IF EXISTS chart_hashes")
 
     await db.close()
-    print("done. restart sbuga-backend to re-render and re-upload all charts.")
+    print(
+        "done. restart sbuga-backend to re-extract score bundles and re-render charts."
+    )
 
 
 if __name__ == "__main__":
