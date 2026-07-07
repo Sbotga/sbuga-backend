@@ -315,24 +315,61 @@ class SbugaFastAPI(FastAPI):
         self.openapi_schema = schema
         return self.openapi_schema
 
-    async def _start_gorgon_subprocess(self):
-        proc = subprocess.Popen(
-            [sys.executable, "-m", "pjsk_api.gorgon"],
-            stdin=subprocess.DEVNULL,
-            stdout=None,
-            stderr=None,
-            close_fds=True,
-            **(
-                {"creationflags": subprocess.CREATE_NO_WINDOW}
-                if sys.platform == "win32"
-                else {}
-            ),
-        )
-        self._gorgon_proc = proc
+    async def _clear_stale_gorgon(self, cs: aiohttp.ClientSession) -> None:
+        """Kill an orphaned helper from a previous (hard-killed) run.
 
-        print("Waiting for gorgon header helper")
+        A live listener on 5001 that doesn't answer /kill is not ours — refuse
+        to start rather than silently use an unknown process for signing."""
+        timeout = aiohttp.ClientTimeout(total=3)
+        try:
+            async with cs.get("http://127.0.0.1:5001", timeout=timeout):
+                pass
+        except Exception:
+            return  # nothing listening
+
+        print("Stale gorgon helper on port 5001, killing it")
+        try:
+            async with cs.post("http://127.0.0.1:5001/kill", timeout=timeout) as resp:
+                if resp.status == 404:
+                    raise RuntimeError(
+                        "Port 5001 is in use by an unknown process (no /kill "
+                        "route) — refusing to start"
+                    )
+        except RuntimeError:
+            raise
+        except Exception:
+            pass  # helper died before the response flushed — that's a kill
+
+        for _ in range(20):
+            try:
+                async with cs.get("http://127.0.0.1:5001", timeout=timeout):
+                    pass
+            except Exception:
+                return  # port freed
+            await asyncio.sleep(0.25)
+        raise RuntimeError("Stale gorgon helper did not release port 5001")
+
+    async def _start_gorgon_subprocess(self):
         async with aiohttp.ClientSession() as cs:
-            for _ in range(20):
+            await self._clear_stale_gorgon(cs)
+
+            proc = subprocess.Popen(
+                [sys.executable, "-m", "pjsk_api.gorgon"],
+                stdin=subprocess.DEVNULL,
+                stdout=None,
+                stderr=None,
+                close_fds=True,
+                **(
+                    {"creationflags": subprocess.CREATE_NO_WINDOW}
+                    if sys.platform == "win32"
+                    else {}
+                ),
+            )
+            self._gorgon_proc = proc
+
+            print("Waiting for gorgon header helper")
+            # the helper imports androidemu before binding, which takes ~30s+
+            for _ in range(180):
                 try:
                     async with cs.get("http://127.0.0.1:5001") as resp:
                         if resp.status == 200:
@@ -341,6 +378,7 @@ class SbugaFastAPI(FastAPI):
                     pass
                 await asyncio.sleep(0.5)
             else:
+                proc.kill()  # don't leave the half-started helper orphaned
                 raise RuntimeError("Gorgon header subprocess did not start in time")
 
         print("Gorgon header subprocess started")
