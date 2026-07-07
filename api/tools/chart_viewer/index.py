@@ -35,10 +35,9 @@ async def _release_chart_lock(key: str) -> None:
     summary="Get chart image",
     description=(
         "Chart image for a music ID / difficulty / region. Un-mirrored charts "
-        "302-redirect to the pre-rendered file on R2 (in the requested "
-        "`image_type`). `mirrored` flips the lanes horizontally — those are "
-        "loaded and edited per-request (never cached). Charts not yet rendered "
-        "are generated on first request."
+        "302-redirect to the pre-rendered png on R2. `mirrored` flips the "
+        "lanes horizontally — those are loaded and edited per-request (never "
+        "cached). Charts not yet rendered are generated on first request."
     ),
     responses={
         200: {"description": "Chart image (mirrored)."},
@@ -57,7 +56,6 @@ async def get_chart(
     difficulty: Literal["easy", "normal", "hard", "expert", "master", "append"],
     region: Literal["en", "jp"],
     mirrored: bool = False,
-    image_type: Literal["webp", "png"] = "png",
 ):
     app: SbugaFastAPI = request.app
 
@@ -74,7 +72,7 @@ async def get_chart(
     if not mirrored:
         return RedirectResponse(
             f"{app.s3_asset_base_url}/pjsk_data/{region}"
-            f"/music/music_score/{padded_id}_01/{difficulty}.{image_type}"
+            f"/music/music_score/{padded_id}_01/{difficulty}.png"
         )
 
     # mirrored: load the local chart (rendering it if missing) and flip it
