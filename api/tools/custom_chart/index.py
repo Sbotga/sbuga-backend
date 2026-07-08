@@ -27,6 +27,9 @@ _IMAGE_MAX = 20
 
 _meta_cache: "OrderedDict[str, tuple[float, dict]]" = OrderedDict()
 _image_cache: "OrderedDict[str, bytes]" = OrderedDict()
+# combo is counted from the score during image render; a published id is
+# immutable, so cache it with no expiry (bounded) and fold it into metadata.
+_combo_cache: "OrderedDict[str, int]" = OrderedDict()
 _render_locks: dict[str, asyncio.Lock] = {}
 _render_locks_meta = asyncio.Lock()
 
@@ -62,6 +65,23 @@ def _image_set(key: str, value: bytes) -> None:
     _image_cache.move_to_end(key)
     while len(_image_cache) > _IMAGE_MAX:
         _image_cache.popitem(last=False)
+
+
+def _combo_set(key: str, value: int) -> None:
+    _combo_cache[key] = value
+    _combo_cache.move_to_end(key)
+    while len(_combo_cache) > _META_MAX:
+        _combo_cache.popitem(last=False)
+
+
+def _inject_combo(info: dict, key: str) -> None:
+    """Fold the known combo count into the metadata (API field wins if it ever
+    provides one, else whatever a prior render counted)."""
+    combo = _combo_from_info(info)
+    if combo is None:
+        combo = _combo_cache.get(key)
+    if combo is not None:
+        info["combo_count"] = combo
 
 
 async def _render_lock(key: str) -> asyncio.Lock:
@@ -133,6 +153,8 @@ async def get_custom_chart(
         info["refreshed_at"] = int(time.time())  # when this metadata was fetched
         _meta_set(key, info)
 
+    _inject_combo(info, key)
+
     if not chart_image:
         return JSONResponse(content=info)
 
@@ -195,8 +217,8 @@ async def _build_image(
             chart_id=chart_id,
         )
         # the API doesn't return a combo count, so cache the one we counted from
-        # the score onto the metadata (kept for the metadata endpoint to serve)
-        info["combo_count"] = _combo_from_info(info) or combo
+        # the score (immutable per id) for the metadata endpoint to serve
+        _combo_set(f"{region}:{chart_id}", combo)
         return png
     except HTTPException:
         raise
