@@ -293,6 +293,9 @@ class SbugaFastAPI(FastAPI):
         )
 
     async def shutdown(self):
+        from pjsk_api.asset_handlers.process import shutdown_extract_executor
+
+        shutdown_extract_executor()
         for client in self.pjsk_clients.values():
             if client:
                 await client.close()

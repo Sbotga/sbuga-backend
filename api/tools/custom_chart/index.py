@@ -130,6 +130,7 @@ async def get_custom_chart(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=ErrorDetailCode.NotFound.value,
             )
+        info["refreshed_at"] = int(time.time())  # when this metadata was fetched
         _meta_set(key, info)
 
     if not chart_image:
@@ -146,6 +147,16 @@ async def get_custom_chart(
                 _image_set(key, img)
 
     return StreamingResponse(io.BytesIO(img), media_type="image/png")
+
+
+def _combo_from_info(info: dict) -> int | None:
+    """combo_count if the API provided one (it doesn't today), else whatever a
+    prior image render computed and cached onto the metadata."""
+    level1 = info.get("userCustomMusicScoreInfoJson") or {}
+    for key in ("noteCount", "comboCount", "combo_count"):
+        if level1.get(key) is not None:
+            return level1[key]
+    return info.get("combo_count")
 
 
 async def _build_image(
@@ -174,7 +185,7 @@ async def _build_image(
     try:
         raw = await download_custom_score(client, score_path)
         data = normalize_pjsk_bytes(raw)
-        return await app.run_blocking(
+        png, combo = await app.run_blocking(
             render_custom_chart,
             data,
             title=title,
@@ -183,6 +194,10 @@ async def _build_image(
             jacket=jacket,
             chart_id=chart_id,
         )
+        # the API doesn't return a combo count, so cache the one we counted from
+        # the score onto the metadata (kept for the metadata endpoint to serve)
+        info["combo_count"] = _combo_from_info(info) or combo
+        return png
     except HTTPException:
         raise
     except Exception:
