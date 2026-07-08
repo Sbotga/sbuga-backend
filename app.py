@@ -137,7 +137,7 @@ async def start_fastapi():
         "app:app",
         host="0.0.0.0",
         port=config.server.port,
-        workers=8,
+        workers=12,
         access_log=debug,
     )
     server = uvicorn.Server(uvicorn_config)

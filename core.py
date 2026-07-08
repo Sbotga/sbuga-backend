@@ -58,7 +58,7 @@ class SbugaFastAPI(FastAPI):
         self.config: Config = config
         self.debug: bool = config.server.debug
 
-        self.executor: ThreadPoolExecutor = ThreadPoolExecutor(max_workers=16)
+        self.executor: ThreadPoolExecutor = ThreadPoolExecutor(max_workers=8)
         self.db: asyncpg.Pool | None = None
 
         self.s3_session: aioboto3.Session | None = None

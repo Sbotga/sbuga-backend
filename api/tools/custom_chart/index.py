@@ -25,7 +25,7 @@ router = APIRouter()
 # never changes, so it's kept until evicted. Bounded to remove abuse and OOM.
 _META_MAX = 500
 _META_TTL = 300  # seconds
-_IMAGE_MAX = 20
+_IMAGE_MAX = 30
 
 _meta_cache: "OrderedDict[str, tuple[float, dict]]" = OrderedDict()
 _image_cache: "OrderedDict[str, bytes]" = OrderedDict()
