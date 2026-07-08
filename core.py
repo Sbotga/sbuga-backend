@@ -24,6 +24,7 @@ from pjsk_api.requests.authenticate_client_row import (
 )
 from pjsk_api.requests.ensure_updated_masterdata import ensure_updated_masterdata
 from pjsk_api.requests.ensure_updated_assetinfo import ensure_updated_assetinfo
+from pjsk_api.requests.check_data_update import check_data_update
 from pjsk_api.asset_handlers import download_and_process_assets
 from pjsk_api.requests.request_handling import request_with_retry
 from pjsk_api.app_ver_hash import get_en, get_jp, get_tw, get_kr, get_cn
@@ -127,6 +128,7 @@ class SbugaFastAPI(FastAPI):
         asyncio.create_task(self._set_kr_pjsk_client())
         # asyncio.create_task(self._set_cn_pjsk_client()) # NOTE: does not work
         asyncio.create_task(self._periodic_update_check())
+        asyncio.create_task(self._periodic_data_update_check())
 
     async def _client_ready(self):
         global _clients_ready
@@ -136,6 +138,25 @@ class SbugaFastAPI(FastAPI):
                 asyncio.create_task(
                     rebuild_maps(self.pjsk_clients["jp"], self.pjsk_clients["en"], self)
                 )
+
+    async def _periodic_data_update_check(self):
+        """Check every region for data/asset updates each minute at :10
+        (1:10, 2:10, ...). Silent unless an update is found."""
+        while True:
+            now = time.time()
+            tick = (now // 60) * 60 + 10
+            if tick <= now:
+                tick += 60
+            await asyncio.sleep(tick - now)
+
+            for region in ("en", "jp", "tw", "kr"):
+                client = self.pjsk_clients.get(region)
+                if not client:
+                    continue
+                try:
+                    await check_data_update(client)
+                except Exception as e:
+                    print(f"[{region}] Update check failed: {e}")
 
     async def _periodic_update_check(self):
         await asyncio.sleep(60)
@@ -166,7 +187,7 @@ class SbugaFastAPI(FastAPI):
                 if not client or not client.is_authenticated:
                     continue
                 try:
-                    await authenticate_client_row(client)
+                    await authenticate_client_row(client, quiet=True)
                 except Exception as e:
                     print(f"[{region}] Periodic ROW re-auth failed: {e}")
 
