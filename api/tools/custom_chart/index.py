@@ -1,6 +1,7 @@
 import asyncio
 import io
 import time
+import traceback
 from collections import OrderedDict
 from typing import Literal
 
@@ -141,6 +142,7 @@ async def get_custom_chart(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail=ErrorDetailCode.NotFound.value,
                 )
+            print(f"[custom_chart] metadata fetch failed for {key}: {e.status} {e}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=ErrorDetailCode.InternalServerError.value,
@@ -223,6 +225,8 @@ async def _build_image(
     except HTTPException:
         raise
     except Exception:
+        print(f"[custom_chart] render failed for {region}:{chart_id}")
+        traceback.print_exc()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=ErrorDetailCode.InternalServerError.value,
