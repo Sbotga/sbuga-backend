@@ -100,11 +100,12 @@ async def _render_lock(key: str) -> asyncio.Lock:
     description=(
         "Fetches a published custom chart's metadata by id. By default returns "
         "the raw metadata JSON; pass `chart_image=true` to instead render and "
-        "return the chart image (png). Metadata is cached briefly; rendered "
-        "images are cached (they never change)."
+        "return the chart image (png). Pass `chart_data=true` to instead return only the chart raw data."
+        "Metadata is cached briefly; rendered images are cached (they never change)."
     ),
     responses={
         200: {"description": "Chart metadata (json) or chart image (png)."},
+        400: {"description": "Passed both chart_image and chart_data as true."},
         404: {
             "description": f"Chart not found. (`{ErrorDetailCode.NotFound}`)",
             **ERROR_RESPONSE,
@@ -118,9 +119,16 @@ async def get_custom_chart(
     chart_id: str,
     region: Literal["jp"],  # only jp exists atm
     chart_image: bool = False,
+    chart_data: bool = False,
     mirrored: bool = False,
 ):
     app: SbugaFastAPI = request.app
+
+    if chart_image and chart_data:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=ErrorDetailCode.BadRequestFields.value,
+        )
 
     client = app.pjsk_clients.get(region)
     if not client:
@@ -159,21 +167,36 @@ async def get_custom_chart(
 
     _inject_combo(info, key)
 
-    if not chart_image:
+    if not (chart_image or chart_data):
         return JSONResponse(content=info)
 
-    # --- chart image (cached, no expiry; mirrored is a separate entry) ---
-    img_key = f"{key}:{int(mirrored)}"
-    img = _image_get(img_key)
-    if img is None:
-        lock = await _render_lock(img_key)
-        async with lock:
-            img = _image_get(img_key)
-            if img is None:
-                img = await _build_image(app, client, region, chart_id, info, mirrored)
-                _image_set(img_key, img)
+    level1 = info.get("userCustomMusicScoreInfoJson") or {}
+    inner = level1.get("userCustomMusicScoreInfoJson") or {}
+    score_path = inner.get("userCustomMusicScorePath")
+    if not score_path:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=ErrorDetailCode.NotFound.value,
+        )
 
-    return StreamingResponse(io.BytesIO(img), media_type="image/png")
+    raw = await download_custom_score(client, score_path)
+
+    # --- chart image (cached, no expiry; mirrored is a separate entry) ---
+    if chart_image:
+        img_key = f"{key}:{int(mirrored)}"
+        img = _image_get(img_key)
+        if img is None:
+            lock = await _render_lock(img_key)
+            async with lock:
+                img = _image_get(img_key)
+                if img is None:
+                    img = await _build_image(
+                        app, client, region, raw, chart_id, info, mirrored
+                    )
+                    _image_set(img_key, img)
+        return StreamingResponse(io.BytesIO(img), media_type="image/png")
+    else:
+        return StreamingResponse(io.BytesIO(raw), media_type="application/octet-stream")
 
 
 def _combo_from_info(info: dict) -> int | None:
@@ -187,16 +210,16 @@ def _combo_from_info(info: dict) -> int | None:
 
 
 async def _build_image(
-    app: SbugaFastAPI, client, region: str, chart_id: str, info: dict, mirrored: bool
+    app: SbugaFastAPI,
+    client,
+    region: str,
+    raw: bytes,
+    chart_id: str,
+    info: dict,
+    mirrored: bool,
 ) -> bytes:
     level1 = info.get("userCustomMusicScoreInfoJson") or {}
     inner = level1.get("userCustomMusicScoreInfoJson") or {}
-    score_path = inner.get("userCustomMusicScorePath")
-    if not score_path:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=ErrorDetailCode.NotFound.value,
-        )
 
     title = inner.get("title") or ""
     music_id = inner.get("musicId")
@@ -210,7 +233,6 @@ async def _build_image(
         jacket = jacket_source(client.data_path, app.s3_asset_base_url, region, music)
 
     try:
-        raw = await download_custom_score(client, score_path)
         data = normalize_pjsk_bytes(raw)
         png, combo = await app.run_blocking(
             render_custom_chart,
