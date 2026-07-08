@@ -11,6 +11,7 @@ from fastapi.responses import JSONResponse, StreamingResponse
 
 from core import SbugaFastAPI
 from helpers.erroring import COMMON_RESPONSES, ERROR_RESPONSE, ErrorDetailCode
+from helpers.mirror_chart import mirror
 from pjsk_api.asset_handlers.charts import jacket_source, render_custom_chart
 from pjsk_api.requests.custom_score import (
     download_custom_score,
@@ -117,6 +118,7 @@ async def get_custom_chart(
     chart_id: str,
     region: Literal["jp"],  # only jp exists atm
     chart_image: bool = False,
+    mirrored: bool = False,
 ):
     app: SbugaFastAPI = request.app
 
@@ -160,15 +162,16 @@ async def get_custom_chart(
     if not chart_image:
         return JSONResponse(content=info)
 
-    # --- chart image (cached, no expiry) ---
-    img = _image_get(key)
+    # --- chart image (cached, no expiry; mirrored is a separate entry) ---
+    img_key = f"{key}:{int(mirrored)}"
+    img = _image_get(img_key)
     if img is None:
-        lock = await _render_lock(key)
+        lock = await _render_lock(img_key)
         async with lock:
-            img = _image_get(key)
+            img = _image_get(img_key)
             if img is None:
-                img = await _build_image(app, client, region, chart_id, info)
-                _image_set(key, img)
+                img = await _build_image(app, client, region, chart_id, info, mirrored)
+                _image_set(img_key, img)
 
     return StreamingResponse(io.BytesIO(img), media_type="image/png")
 
@@ -184,7 +187,7 @@ def _combo_from_info(info: dict) -> int | None:
 
 
 async def _build_image(
-    app: SbugaFastAPI, client, region: str, chart_id: str, info: dict
+    app: SbugaFastAPI, client, region: str, chart_id: str, info: dict, mirrored: bool
 ) -> bytes:
     level1 = info.get("userCustomMusicScoreInfoJson") or {}
     inner = level1.get("userCustomMusicScoreInfoJson") or {}
@@ -216,11 +219,13 @@ async def _build_image(
             difficulty=difficulty,
             playlevel=str(playlevel) if playlevel is not None else None,
             jacket=jacket,
-            chart_id=chart_id,
+            chart_id=f"{region.upper()}: {chart_id}",
         )
         # the API doesn't return a combo count, so cache the one we counted from
         # the score (immutable per id) for the metadata endpoint to serve
         _combo_set(f"{region}:{chart_id}", combo)
+        if mirrored:
+            png = (await app.run_blocking(mirror, io.BytesIO(png))).getvalue()
         return png
     except HTTPException:
         raise
