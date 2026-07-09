@@ -1,4 +1,4 @@
-from . import accounts, aliases, models
+from . import accounts, aliases, bots, models
 
 from .query import SelectQuery, ExecutableQuery
 

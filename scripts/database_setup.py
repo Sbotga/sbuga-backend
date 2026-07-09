@@ -82,6 +82,17 @@ async def main():
             UNIQUE (account_id, permission)
         );
         """,
+        # A bot is a normal `account` row plus this token record, so permissions
+        # (account_permissions) and authorship (aliases.created_by) work unchanged.
+        """
+        CREATE TABLE IF NOT EXISTS bot_account (
+            account_id BIGINT PRIMARY KEY REFERENCES account(id) ON DELETE CASCADE,
+            name TEXT NOT NULL UNIQUE,
+            token_hash TEXT NOT NULL UNIQUE,
+            created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+            revoked BOOLEAN NOT NULL DEFAULT FALSE
+        );
+        """,
         """
             CREATE INDEX IF NOT EXISTS idx_account_email ON account(email);
             CREATE INDEX IF NOT EXISTS idx_account_base_email ON account(base_email);

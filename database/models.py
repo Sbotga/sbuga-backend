@@ -30,6 +30,17 @@ class AccountPermission(BaseModel):
     created_at: datetime
 
 
+class BotAccount(BaseModel):
+    """Token record for a bot. The bot itself is a normal `account` row, so its
+    permissions live in `account_permissions` exactly like a human account's."""
+
+    account_id: int
+    name: str
+    token_hash: str
+    created_at: datetime
+    revoked: bool
+
+
 class SongAlias(BaseModel):
     id: int
     alias: str

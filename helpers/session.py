@@ -4,8 +4,9 @@ from typing import Optional, Literal, List
 from dataclasses import dataclass, field
 from fastapi import Header, HTTPException, status, Request, Depends
 from core import SbugaFastAPI
-from database import accounts
+from database import accounts, bots
 from database.models import Account, AccountPermission
+from helpers.bot_tokens import BOT_AUTH_SCHEME, hash_bot_token
 from helpers.erroring import ErrorDetailCode
 
 
@@ -108,6 +109,7 @@ class Session:
             enforce_type if type(enforce_type) == list else [enforce_type]
         )
         self.allow_unverified_email = allow_unverified_email
+        self.is_bot: bool = False
         self._user_fetched: bool = False
         self._user: Account | None = None
         self._user_permissions: list[AccountPermission] | None = None
@@ -149,6 +151,52 @@ class Session:
 
         return self._user
 
+    async def _authenticate_bot(self, token: str) -> None:
+        """`Authorization: Bot <token>` — resolve the token to its `account` row and
+        prefill the session, so permissions and `user()` behave exactly as they do
+        for a human session (a bot *is* an account)."""
+        # a bot token is only ever an "access"-grade credential
+        if self.enforce_type and "access" not in self.enforce_type:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=ErrorDetailCode.SessionInvalid.value,
+            )
+        async with self.app.acquire_db() as conn:
+            bot = await conn.fetchrow(bots.get_bot_by_token_hash(hash_bot_token(token)))
+            if not bot:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail=ErrorDetailCode.SessionInvalid.value,
+                )
+            account = await conn.fetchrow(accounts.get_account_by_id(bot.account_id))
+            perms = await conn.fetch(accounts.get_permissions(bot.account_id))
+
+        if not account:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=ErrorDetailCode.NotLoggedIn.value,
+            )
+        if not self.allow_banned_users and account.banned:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=ErrorDetailCode.Banned.value,
+            )
+
+        self.is_bot = True
+        self.account_id = account.id
+        self.session_data = SessionData(
+            account_id=account.id,
+            type="access",
+            exp=datetime.now(timezone.utc) + timedelta(minutes=EXPIRES["access"]),
+            session_uuid=account.valid_session_uuid,
+            extra={},
+        )
+        # prefill so user() doesn't re-query (and can't trip the email check)
+        self._user = account
+        self._user_fetched = True
+        self._user_permissions = perms
+        self.permissions = [p.permission for p in perms]
+
     async def __call__(
         self, request: Request, authorization: Optional[str] = Header(None)
     ):
@@ -160,6 +208,12 @@ class Session:
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail=ErrorDetailCode.NotLoggedIn.value,
             )
+
+        if authorization and authorization.startswith(f"{BOT_AUTH_SCHEME} "):
+            await self._authenticate_bot(
+                authorization[len(BOT_AUTH_SCHEME) + 1 :].strip()
+            )
+            return self
 
         if authorization:
             self.session_data = decode_session(authorization, self.app)
