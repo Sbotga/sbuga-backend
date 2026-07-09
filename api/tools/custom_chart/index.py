@@ -20,7 +20,7 @@ from pjsk_api.asset_handlers.charts import (
 from pjsk_api.requests.custom_score import (
     OFFICIAL_BUNDLE_PREFIX,
     download_custom_score,
-    download_official_score,
+    download_official_score_maker_score,
     normalize_pjsk_bytes,
     published_score_request,
 )
@@ -239,7 +239,7 @@ async def get_custom_chart(
     if info.get("isOfficialCreator"):
         # official scores live in an assetbundle, not the blob API
         score_id = level1.get("userCustomMusicScoreId") or chart_id
-        bundle = await download_official_score(client, score_id)
+        bundle = await download_official_score_maker_score(client, score_id)
         raw = await app.run_blocking(extract_custom_score, bundle)
     else:
         score_path = inner.get("userCustomMusicScorePath")
