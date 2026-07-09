@@ -13,21 +13,27 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from core import SbugaFastAPI
 
-_katsu_hepburn = cutlet.Cutlet(
-    system="hepburn", use_foreign_spelling=False, ensure_ascii=False
-)
-_katsu_nihon = cutlet.Cutlet(
-    system="nihon", use_foreign_spelling=False, ensure_ascii=False
-)
-_katsu_kunrei = cutlet.Cutlet(
-    system="kunrei", use_foreign_spelling=False, ensure_ascii=False
-)
+_ROMAJI_SYSTEMS = ("hepburn", "nihon", "kunrei")
 
-ROMANIZERS = [
-    lambda text: _katsu_hepburn.romaji(text).lower().strip(),
-    lambda text: _katsu_nihon.romaji(text).lower().strip(),
-    lambda text: _katsu_kunrei.romaji(text).lower().strip(),
+# Each system is run twice. `use_foreign_spelling` maps katakana loanwords back to
+# their source spelling — アクセラレイト -> "accelerate", which is how people type it —
+# but it guesses wrong on names (ロキ -> "loci"). Neither setting is a superset, so
+# both are kept: every title gets a phonetic key *and* a loanword key.
+_KATSU = [
+    cutlet.Cutlet(system=system, use_foreign_spelling=foreign, ensure_ascii=False)
+    for system in _ROMAJI_SYSTEMS
+    for foreign in (False, True)
 ]
+
+
+def _make_romanizer(katsu: cutlet.Cutlet):
+    def romanize(text: str) -> str:
+        return katsu.romaji(text).lower().strip()
+
+    return romanize
+
+
+ROMANIZERS = [_make_romanizer(k) for k in _KATSU]
 
 _song_maps: dict[str, dict[str, tuple[int, frozenset[str]]]] = {"jp": {}, "en": {}}
 _character_map: dict[str, int] = {}

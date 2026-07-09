@@ -53,7 +53,10 @@ class RemoveEventAliasBody(BaseModel):
             **ERROR_RESPONSE,
         },
         409: {
-            "description": f"Alias already exists. (`{ErrorDetailCode.Conflict}`)",
+            "description": (
+                f"Alias already taken by another entry. (`{ErrorDetailCode.AliasTaken}`; "
+                "detail carries the owning `music_id`/`event_id`)"
+            ),
             **ERROR_RESPONSE,
         },
     },
@@ -74,13 +77,30 @@ async def add_song_alias_route(
         )
 
     body.alias = preprocess(body.alias)
+    if not body.alias:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=ErrorDetailCode.BadRequestFields.value,
+        )
 
     async with app.acquire_db() as conn:
+        # aliases are unique across every song — say which one already holds it
+        taken = await conn.fetchrow(db.aliases.get_song_alias_by_alias(body.alias))
+        if taken:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail={
+                    "code": ErrorDetailCode.AliasTaken.value,
+                    "alias": body.alias,
+                    "music_id": taken.music_id,
+                },
+            )
         result = await conn.fetchrow(
             db.aliases.add_song_alias(body.alias, body.music_id, body.region, user.id)
         )
 
     if not result:
+        # lost a race with a concurrent insert; the unique index caught it
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=ErrorDetailCode.Conflict.value,
@@ -156,7 +176,10 @@ async def remove_song_alias_route(
             **ERROR_RESPONSE,
         },
         409: {
-            "description": f"Alias already exists. (`{ErrorDetailCode.Conflict}`)",
+            "description": (
+                f"Alias already taken by another entry. (`{ErrorDetailCode.AliasTaken}`; "
+                "detail carries the owning `music_id`/`event_id`)"
+            ),
             **ERROR_RESPONSE,
         },
     },
@@ -177,13 +200,30 @@ async def add_event_alias_route(
         )
 
     body.alias = preprocess(body.alias)
+    if not body.alias:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=ErrorDetailCode.BadRequestFields.value,
+        )
 
     async with app.acquire_db() as conn:
+        # aliases are unique across every event — say which one already holds it
+        taken = await conn.fetchrow(db.aliases.get_event_alias_by_alias(body.alias))
+        if taken:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail={
+                    "code": ErrorDetailCode.AliasTaken.value,
+                    "alias": body.alias,
+                    "event_id": taken.event_id,
+                },
+            )
         result = await conn.fetchrow(
             db.aliases.add_event_alias(body.alias, body.event_id, body.region, user.id)
         )
 
     if not result:
+        # lost a race with a concurrent insert; the unique index caught it
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=ErrorDetailCode.Conflict.value,

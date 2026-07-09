@@ -4,8 +4,24 @@ import unicodedata
 import re
 
 
+def _is_invisible(ch: str) -> bool:
+    """Zero-width / control / bidi format chars (Cc, Cf), the Tags block (the U+E0000
+    tag space some clients inject — unassigned/Cn, so the category check alone misses
+    it) and variation selectors. Without stripping these, two identical-looking
+    aliases are different strings and both get stored."""
+    if unicodedata.category(ch) in ("Cc", "Cf"):
+        return True
+    o = ord(ch)
+    return (
+        0xE0000 <= o <= 0xE007F  # Tags
+        or 0xFE00 <= o <= 0xFE0F  # variation selectors
+        or 0xE0100 <= o <= 0xE01EF  # variation selectors supplement
+    )
+
+
 def preprocess(text: str) -> str:
     text = unicodedata.normalize("NFKC", text)
+    text = "".join(c for c in text if not _is_invisible(c))
     text = text.lower().strip()
 
     STAR_LIKE = (

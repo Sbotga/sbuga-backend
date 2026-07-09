@@ -29,6 +29,7 @@ class ErrorDetailCode(StrEnum):
     InvalidImage = "invalid_image"
     Forbidden = "forbidden"
     Conflict = "conflict"
+    AliasTaken = "alias_taken"
 
     PJSKMaintainence = "maintainence_pjsk"
     PJSKClientUnavailable = "pjsk_region_unavailable"
