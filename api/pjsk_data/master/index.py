@@ -16,6 +16,13 @@ ALLOWED_FILES = {
     "cheerfulCarnivalTeams",
     "cards",
     "gachas",
+    "eventStories",
+    "musics",
+    "musicVocals",
+    "musicDifficulties",
+    "outsideCharacters",
+    "unitProfiles",
+    "skills",
 }
 
 

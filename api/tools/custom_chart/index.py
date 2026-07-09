@@ -12,9 +12,15 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from core import SbugaFastAPI
 from helpers.erroring import COMMON_RESPONSES, ERROR_RESPONSE, ErrorDetailCode
 from helpers.mirror_chart import mirror
-from pjsk_api.asset_handlers.charts import jacket_source, render_custom_chart
+from pjsk_api.asset_handlers.charts import (
+    extract_custom_score,
+    jacket_source,
+    render_custom_chart,
+)
 from pjsk_api.requests.custom_score import (
+    OFFICIAL_BUNDLE_PREFIX,
     download_custom_score,
+    download_official_score,
     normalize_pjsk_bytes,
     published_score_request,
 )
@@ -84,6 +90,61 @@ def _inject_combo(info: dict, key: str) -> None:
         combo = _combo_cache.get(key)
     if combo is not None:
         info["combo_count"] = combo
+
+
+async def _normalize_info(client, chart_id: str, info: dict) -> dict | None:
+    """Normalize "official" chart maker scores.
+
+    Why does SEGA do this??
+    """
+    if not isinstance(info, dict):
+        return None
+    if info.get("userCustomMusicScoreInfoJson"):
+        return info
+
+    official = info.get("customMusicScoreOfficialCreatorPublishedResponseJson")
+    if not isinstance(official, dict):
+        return None
+
+    score_id = official.get("customMusicScoreId") or chart_id
+    creators = await client.get_master("customMusicScoreOfficialCreators")
+    entry = next((c for c in creators if c.get("scoreId") == score_id), None)
+    if not entry:
+        return None
+
+    profiles = await client.get_master("customMusicScoreOfficialCreatorProfiles")
+    profile_id = entry.get("customMusicScoreOfficialCreatorProfileId")
+    profile = next((p for p in profiles if p.get("id") == profile_id), None)
+    tags = [entry.get(f"tagId{i}") for i in (1, 2, 3)]
+
+    return {
+        "userCustomMusicScoreInfoJson": {
+            "userCustomMusicScoreInfoJson": {
+                "musicId": entry.get("musicId"),
+                "title": entry.get("title"),
+                # official scores have no blob path — their data ships as an
+                # assetbundle (see _download_official_score)
+                "userCustomMusicScorePath": None,
+            },
+            "userCustomMusicScoreId": score_id,
+            "musicDifficultyType": entry.get("musicDifficultyType"),
+            "playLevel": entry.get("playLevel"),
+            "description": entry.get("description") or "",
+            "playCount": official.get("playCount"),
+            "fullComboRate": official.get("fullComboRate"),
+            "reviewCount": official.get("reviewCount"),
+            "publishedAt": entry.get("publishedStartAt"),
+            "isDerivativeAllowed": entry.get("isDerivativeAllowed"),
+            "customMusicScoreTags": [t for t in tags if t],
+        },
+        "isOfficialCreator": True,
+        "officialScoreBundle": f"{OFFICIAL_BUNDLE_PREFIX}/{score_id}",
+        "officialCreator": {
+            "profileId": profile_id,
+            "name": profile.get("name") if profile else None,
+            "previewStartTimeSec": entry.get("previewStartTimeSec"),
+        },
+    }
 
 
 async def _render_lock(key: str) -> asyncio.Lock:
@@ -157,7 +218,9 @@ async def get_custom_chart(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=ErrorDetailCode.InternalServerError.value,
             )
-        if not isinstance(info, dict) or not info.get("userCustomMusicScoreInfoJson"):
+        # user scores and official-creator scores come back in different shapes
+        info = await _normalize_info(client, chart_id, info)
+        if info is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=ErrorDetailCode.NotFound.value,
@@ -172,14 +235,20 @@ async def get_custom_chart(
 
     level1 = info.get("userCustomMusicScoreInfoJson") or {}
     inner = level1.get("userCustomMusicScoreInfoJson") or {}
-    score_path = inner.get("userCustomMusicScorePath")
-    if not score_path:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=ErrorDetailCode.NotFound.value,
-        )
 
-    raw = await download_custom_score(client, score_path)
+    if info.get("isOfficialCreator"):
+        # official scores live in an assetbundle, not the blob API
+        score_id = level1.get("userCustomMusicScoreId") or chart_id
+        bundle = await download_official_score(client, score_id)
+        raw = await app.run_blocking(extract_custom_score, bundle)
+    else:
+        score_path = inner.get("userCustomMusicScorePath")
+        if not score_path:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=ErrorDetailCode.NotFound.value,
+            )
+        raw = await download_custom_score(client, score_path)
 
     # --- chart image (cached, no expiry; mirrored is a separate entry) ---
     if chart_image:
