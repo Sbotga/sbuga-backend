@@ -208,7 +208,9 @@ async def get_custom_chart(
                 region, published_score_request(client, chart_id)
             )
         except aiohttp.ClientResponseError as e:
-            if e.status == 404:
+            # the pjsk api returns 400 (not 404) for a missing custom chart, so treat both as
+            # not found and don't log it - it's an expected miss, not an error worth spamming
+            if e.status in (400, 404):
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail=ErrorDetailCode.NotFound.value,

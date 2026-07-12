@@ -153,10 +153,20 @@ class SbugaFastAPI(FastAPI):
                 client = self.pjsk_clients.get(region)
                 if not client:
                     continue
-                try:
-                    await check_data_update(client)
-                except Exception as e:
-                    print(f"[{region}] Update check failed: {e}")
+                # jp connectivity is spotty, so retry a few times and only surface the error
+                # if all attempts fail - a transient dns/connection blip shouldn't spam logs
+                last_err = None
+                for attempt in range(3):
+                    try:
+                        await check_data_update(client)
+                        last_err = None
+                        break
+                    except Exception as e:
+                        last_err = e
+                        if attempt < 2:
+                            await asyncio.sleep(3)
+                if last_err is not None:
+                    print(f"[{region}] Update check failed after 3 tries: {last_err}")
 
     async def _periodic_update_check(self):
         await asyncio.sleep(60)
