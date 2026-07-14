@@ -5,7 +5,8 @@ import aiofiles
 import asyncio
 from msgpack import unpackb, packb
 from pjsk_api.crypto import encrypt, decrypt
-from pjsk_api.constants import keys
+from pjsk_api.constants import keys, REGION_ROW
+from pjsk_api.nuverse_masterdata.process_row_json import nuverse_api_restorer
 from typing import Any, Optional, Type, TypeVar, Generic, TYPE_CHECKING
 from pydantic import BaseModel
 from pathlib import Path
@@ -200,6 +201,11 @@ class PJSKClient:
                 slot.session._default_headers.update({"X-Session-Token": session_token})
 
             result = self._unpack(raw)
+
+            # row responses leave userCard/honors schema-encoded - restore them per the bundle's
+            # route decorators before anyone (or a response model) reads the response
+            if isinstance(result, dict) and self.region in REGION_ROW:
+                result = await nuverse_api_restorer(result, req.path, self.region)
 
             if req.response_model is not None and isinstance(result, dict):
                 return req.response_model.model_validate(result)

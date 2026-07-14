@@ -18,6 +18,7 @@ ALLOWED_FILES = {
     "gachas",
     "eventStories",
     "eventStoryUnits",
+    "virtualLives",
     "musics",
     "musicVocals",
     "musicDifficulties",

@@ -36,6 +36,13 @@ def get_current_event(events: list) -> dict | None:
         else:
             event_status = "end"
         return {"id": event["id"], "status": event_status}
+    # nothing is open right now. keep serving the most recently ended event as "end" so we bridge
+    # the gap until the next event begins (which can appear slowly) - its leaderboard/border stay
+    # fetchable for a while after close, and we just keep attempting until the api blocks us
+    ended = [event for event in events if now >= event["aggregateAt"]]
+    if ended:
+        last = max(ended, key=lambda event: event["aggregateAt"])
+        return {"id": last["id"], "status": "end"}
     return None
 
 
@@ -127,7 +134,11 @@ async def _save_cache(data: dict, cache_path: Path) -> None:
     },
     tags=["PJSK Data"],
 )
-async def current_event(request: Request, region: Literal["en", "jp", "tw", "kr"]):
+async def current_event(
+    request: Request,
+    region: Literal["en", "jp", "tw", "kr"],
+    fresh: bool = False,
+):
     app: SbugaFastAPI = request.app
 
     client = app.pjsk_clients.get(region)
@@ -143,14 +154,15 @@ async def current_event(request: Request, region: Literal["en", "jp", "tw", "kr"
         await _try_load_file_cache(region, cache_path)
 
     prev = cached.get(region, {})
-    if prev.get("updated", 0) + CACHE_TTL > time.time():
+    # fresh=true bypasses the 5-minute cache and pulls straight from PJSK (still updating the cache)
+    if not fresh and prev.get("updated", 0) + CACHE_TTL > time.time():
         return prev
 
     lock = get_lock(region)
 
     async with lock:
         prev = cached.get(region, {})
-        if prev.get("updated", 0) + CACHE_TTL > time.time():
+        if not fresh and prev.get("updated", 0) + CACHE_TTL > time.time():
             return prev
 
         file_cache = cached.get(region) or None

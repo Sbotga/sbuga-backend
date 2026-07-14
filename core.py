@@ -149,16 +149,17 @@ class SbugaFastAPI(FastAPI):
                 tick += 60
             await asyncio.sleep(tick - now)
 
+            needs_rebuild = False
             for region in ("en", "jp", "tw", "kr"):
                 client = self.pjsk_clients.get(region)
                 if not client:
                     continue
-                # jp connectivity is spotty, so retry a few times and only surface the error
-                # if all attempts fail - a transient dns/connection blip shouldn't spam logs
                 last_err = None
                 for attempt in range(3):
                     try:
-                        await check_data_update(client)
+                        updated = await check_data_update(client)
+                        if updated and region in ("en", "jp"):
+                            needs_rebuild = True
                         last_err = None
                         break
                     except Exception as e:
@@ -167,6 +168,12 @@ class SbugaFastAPI(FastAPI):
                             await asyncio.sleep(3)
                 if last_err is not None:
                     print(f"[{region}] Update check failed after 3 tries: {last_err}")
+
+            if needs_rebuild:
+                jp = self.pjsk_clients.get("jp")
+                en = self.pjsk_clients.get("en")
+                if jp and en:
+                    asyncio.create_task(rebuild_maps(jp, en, self))
 
     async def _periodic_update_check(self):
         await asyncio.sleep(60)
