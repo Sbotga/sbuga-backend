@@ -22,6 +22,7 @@ ALLOWED_FILES = {
     "musics",
     "musicVocals",
     "musicDifficulties",
+    "limitedTimeMusics",
     "outsideCharacters",
     "unitProfiles",
     "skills",
