@@ -58,6 +58,12 @@ async def get_assetinfo(
     async with aiofiles.open(assetinfo_path, "r", encoding="utf8") as f:
         assetinfo = json.loads(await f.read())
 
+    # surface locally-bundled removed_data bundles (e.g. delisted song charts) the
+    # same way as live ones
+    from pjsk_api.asset_handlers.removed_data import inject_assetinfo_bundles
+
+    inject_assetinfo_bundles(assetinfo, region)
+
     bundles = assetinfo.get("bundles", {})
 
     if filter:

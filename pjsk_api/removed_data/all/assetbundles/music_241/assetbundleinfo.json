@@ -1,0 +1,131 @@
+{
+  "bundles": {
+    "music/music_score/0241_01": {
+      "bundleName": "music/music_score/0241_01",
+      "cacheFileName": "9f55d3f8e2cbfa5f3f8fb4dd2bf0e402",
+      "cacheDirectoryName": "9f55",
+      "hash": "7847526198eeada5043ba69b88e74af5",
+      "category": "StartApp",
+      "crc": 1601248366,
+      "fileSize": 12127,
+      "dependencies": [],
+      "paths": [
+        "StartApp/music/music_score/0241_01"
+      ],
+      "isBuiltin": false,
+      "isRelocate": false
+    },
+    "music/jacket/jacket_s_241": {
+      "bundleName": "music/jacket/jacket_s_241",
+      "cacheFileName": "106d6b88223b7f723aa6649d331dcfdf",
+      "cacheDirectoryName": "106d",
+      "hash": "e966d320a7e32a8def8f8907219b6337",
+      "category": "StartApp",
+      "crc": 1289683506,
+      "fileSize": 241469,
+      "dependencies": [],
+      "paths": [
+        "StartApp/music/jacket/jacket_s_241"
+      ],
+      "isBuiltin": false,
+      "isRelocate": false
+    },
+    "live/2dmode/original_mv/0241": {
+      "bundleName": "live/2dmode/original_mv/0241",
+      "cacheFileName": "687ac987b3e5b0a026446654f2b44091",
+      "cacheDirectoryName": "687a",
+      "hash": "d3b6585440aacb61611550b3bafcf9aa",
+      "category": "OnDemand",
+      "crc": 1917290556,
+      "fileSize": 18992111,
+      "dependencies": [],
+      "paths": [],
+      "isBuiltin": false,
+      "isRelocate": false
+    },
+    "music/long/se_0241_01": {
+      "bundleName": "music/long/se_0241_01",
+      "cacheFileName": "2d7080f2002cdb26b9352eb3865ceda9",
+      "cacheDirectoryName": "2d70",
+      "hash": "935f1d96e6ee4ad2e64b85bf99abf29e",
+      "category": "OnDemand",
+      "crc": 1954272119,
+      "fileSize": 2338999,
+      "dependencies": [],
+      "paths": [],
+      "isBuiltin": false,
+      "isRelocate": false
+    },
+    "music/short/se_0241_01": {
+      "bundleName": "music/short/se_0241_01",
+      "cacheFileName": "dad2592423b2c9b6471119a9848f17dd",
+      "cacheDirectoryName": "dad2",
+      "hash": "0771a24f23e70de813b4ce94d1a45556",
+      "category": "StartApp",
+      "crc": 3740504403,
+      "fileSize": 457985,
+      "dependencies": [],
+      "paths": [
+        "StartApp/music/short/se_0241_01"
+      ],
+      "isBuiltin": false,
+      "isRelocate": false
+    },
+    "music/long/vs_0241_01": {
+      "bundleName": "music/long/vs_0241_01",
+      "cacheFileName": "f6ea91e24f673b2c4a8662da980a8694",
+      "cacheDirectoryName": "f6ea",
+      "hash": "c7aab90b7a5c327d840e4d50de42cc29",
+      "category": "OnDemand",
+      "crc": 2011318852,
+      "fileSize": 2329005,
+      "dependencies": [],
+      "paths": [],
+      "isBuiltin": false,
+      "isRelocate": false
+    },
+    "music/short/vs_0241_01": {
+      "bundleName": "music/short/vs_0241_01",
+      "cacheFileName": "f3db4ab257cf54918b30d3882d8a26c1",
+      "cacheDirectoryName": "f3db",
+      "hash": "5d07ddcd50d22c2ec033085a4c14ecf1",
+      "category": "StartApp",
+      "crc": 933198237,
+      "fileSize": 458002,
+      "dependencies": [],
+      "paths": [
+        "StartApp/music/short/vs_0241_01"
+      ],
+      "isBuiltin": false,
+      "isRelocate": false
+    },
+    "music/long/an_0241_01": {
+      "bundleName": "music/long/an_0241_01",
+      "cacheFileName": "ffff17be39bbad956182cde6fe4bd49a",
+      "cacheDirectoryName": "ffff",
+      "hash": "8a1507c983b31c8c4516162c2107daa8",
+      "category": "OnDemand",
+      "crc": 3823719910,
+      "fileSize": 2340578,
+      "dependencies": [],
+      "paths": [],
+      "isBuiltin": false,
+      "isRelocate": false
+    },
+    "music/short/an_0241_01": {
+      "bundleName": "music/short/an_0241_01",
+      "cacheFileName": "cdb3619697099d6d5926d8d9bd4d8f38",
+      "cacheDirectoryName": "cdb3",
+      "hash": "9ec83d5ddac35ffacfe9cd69bf9d6f0d",
+      "category": "StartApp",
+      "crc": 3251523592,
+      "fileSize": 457877,
+      "dependencies": [],
+      "paths": [
+        "StartApp/music/short/an_0241_01"
+      ],
+      "isBuiltin": false,
+      "isRelocate": false
+    }
+  }
+}

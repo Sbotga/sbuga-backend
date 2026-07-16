@@ -1,0 +1,172 @@
+{
+  "musics": [
+    {
+      "id": 290,
+      "seq": 9000290,
+      "releaseConditionId": 1,
+      "categories": [
+        {
+          "musicCategoryName": "mv_2d"
+        }
+      ],
+      "title": "どんな結末がお望みだい？",
+      "pronunciation": "どんなけつまつがおのぞみだい",
+      "creatorArtistId": 153,
+      "lyricist": "ぷす(fromツユ)",
+      "composer": "ぷす(fromツユ)",
+      "arranger": "ぷす(fromツユ)",
+      "dancerCount": 1,
+      "selfDancerPosition": 0,
+      "assetbundleName": "jacket_s_290",
+      "publishedAt": 1666332000000,
+      "releasedAt": 1666278000000,
+      "fillerSec": 9.0,
+      "infos": [
+        {
+          "title": "어떤 결말을 원하니?",
+          "creator": "츠유",
+          "lyricist": "푸스(from 츠유)",
+          "composer": "푸스(from 츠유)",
+          "arranger": "푸스(from 츠유)"
+        }
+      ],
+      "isNewlyWrittenMusic": true,
+      "isFullLength": false,
+      "is_removed": true
+    }
+  ],
+  "musicVocals": [
+    {
+      "id": 720,
+      "musicId": 290,
+      "musicVocalType": "virtual_singer",
+      "seq": 1,
+      "releaseConditionId": 5,
+      "caption": "버추얼 싱어 ver.",
+      "characters": [
+        {
+          "id": 1345,
+          "musicId": 290,
+          "musicVocalId": 720,
+          "characterType": "game_character",
+          "characterId": 21,
+          "seq": 2900
+        }
+      ],
+      "assetbundleName": "vs_0290_01",
+      "archiveDisplayType": "normal",
+      "archivePublishedAt": 1666332000000
+    },
+    {
+      "id": 721,
+      "musicId": 290,
+      "musicVocalType": "sekai",
+      "seq": 1,
+      "releaseConditionId": 5,
+      "caption": "세카이 ver.",
+      "characters": [
+        {
+          "id": 1346,
+          "musicId": 290,
+          "musicVocalId": 721,
+          "characterType": "game_character",
+          "characterId": 16,
+          "seq": 2901
+        },
+        {
+          "id": 1421,
+          "musicId": 290,
+          "musicVocalId": 721,
+          "characterType": "game_character",
+          "characterId": 21,
+          "seq": 2902
+        },
+        {
+          "id": 1422,
+          "musicId": 290,
+          "musicVocalId": 721,
+          "characterType": "game_character",
+          "characterId": 13,
+          "seq": 2903
+        },
+        {
+          "id": 1423,
+          "musicId": 290,
+          "musicVocalId": 721,
+          "characterType": "game_character",
+          "characterId": 14,
+          "seq": 2904
+        },
+        {
+          "id": 1424,
+          "musicId": 290,
+          "musicVocalId": 721,
+          "characterType": "game_character",
+          "characterId": 15,
+          "seq": 2905
+        }
+      ],
+      "assetbundleName": "se_0290_01",
+      "archiveDisplayType": "normal",
+      "archivePublishedAt": 1666332000000
+    }
+  ],
+  "musicDifficulties": [
+    {
+      "id": 1446,
+      "musicId": 290,
+      "musicDifficulty": "easy",
+      "playLevel": 8,
+      "totalNoteCount": 215
+    },
+    {
+      "id": 1447,
+      "musicId": 290,
+      "musicDifficulty": "normal",
+      "playLevel": 12,
+      "totalNoteCount": 325
+    },
+    {
+      "id": 1448,
+      "musicId": 290,
+      "musicDifficulty": "hard",
+      "playLevel": 17,
+      "totalNoteCount": 494
+    },
+    {
+      "id": 1449,
+      "musicId": 290,
+      "musicDifficulty": "expert",
+      "playLevel": 24,
+      "totalNoteCount": 638
+    },
+    {
+      "id": 1450,
+      "musicId": 290,
+      "musicDifficulty": "master",
+      "playLevel": 28,
+      "totalNoteCount": 835
+    }
+  ],
+  "musicTags": [
+    {
+      "musicId": 290,
+      "musicTag": "all"
+    },
+    {
+      "musicId": 290,
+      "musicTag": "vocaloid"
+    },
+    {
+      "musicId": 290,
+      "musicTag": "theme_park"
+    }
+  ],
+  "musicArtists": [
+    {
+      "id": 153,
+      "name": "ツユ",
+      "pronunciation": "つゆ"
+    }
+  ]
+}

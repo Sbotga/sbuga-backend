@@ -1,0 +1,103 @@
+{
+  "bundles": {
+    "music/music_score/0290_01": {
+      "bundleName": "music/music_score/0290_01",
+      "cacheFileName": "374c9e283d226178f49151a615b092b0",
+      "cacheDirectoryName": "374c",
+      "hash": "5fa242e56900fab3956d234667282ce9",
+      "category": "StartApp",
+      "crc": 1903420023,
+      "fileSize": 11484,
+      "dependencies": [],
+      "paths": [
+        "StartApp/music/music_score/0290_01"
+      ],
+      "isBuiltin": false,
+      "isRelocate": false
+    },
+    "music/jacket/jacket_s_290": {
+      "bundleName": "music/jacket/jacket_s_290",
+      "cacheFileName": "997a258599aac594372eb3169d59ee29",
+      "cacheDirectoryName": "997a",
+      "hash": "17624226cc25c58571808319dabe95a6",
+      "category": "StartApp",
+      "crc": 3448375170,
+      "fileSize": 240388,
+      "dependencies": [],
+      "paths": [
+        "StartApp/music/jacket/jacket_s_290"
+      ],
+      "isBuiltin": false,
+      "isRelocate": false
+    },
+    "live/2dmode/sekai_mv/0290": {
+      "bundleName": "live/2dmode/sekai_mv/0290",
+      "cacheFileName": "79baa56fffcc758de0e1780f9c738cb4",
+      "cacheDirectoryName": "79ba",
+      "hash": "254c69dac675de3d02776075e5afcbad",
+      "category": "OnDemand",
+      "crc": 1900486776,
+      "fileSize": 12706896,
+      "dependencies": [],
+      "paths": [],
+      "isBuiltin": false,
+      "isRelocate": false
+    },
+    "music/long/se_0290_01": {
+      "bundleName": "music/long/se_0290_01",
+      "cacheFileName": "d71b5d3789ff56557fbc2a0c7474efd6",
+      "cacheDirectoryName": "d71b",
+      "hash": "88ed39fc7beca9fa87b8f969d679c2c8",
+      "category": "OnDemand",
+      "crc": 1075325644,
+      "fileSize": 1385898,
+      "dependencies": [],
+      "paths": [],
+      "isBuiltin": false,
+      "isRelocate": false
+    },
+    "music/short/se_0290_01": {
+      "bundleName": "music/short/se_0290_01",
+      "cacheFileName": "cdbcdde67e03f2fbbeb7035b19048653",
+      "cacheDirectoryName": "cdbc",
+      "hash": "ad253dcbe9c107022eb16c129b74edc2",
+      "category": "StartApp",
+      "crc": 455693297,
+      "fileSize": 360914,
+      "dependencies": [],
+      "paths": [
+        "StartApp/music/short/se_0290_01"
+      ],
+      "isBuiltin": false,
+      "isRelocate": false
+    },
+    "music/long/vs_0290_01": {
+      "bundleName": "music/long/vs_0290_01",
+      "cacheFileName": "5e838b1b574108f1ebe70ac5f948d44a",
+      "cacheDirectoryName": "5e83",
+      "hash": "0b87f0de9175d72e34d3e4f069f85a83",
+      "category": "OnDemand",
+      "crc": 3270204523,
+      "fileSize": 1542116,
+      "dependencies": [],
+      "paths": [],
+      "isBuiltin": false,
+      "isRelocate": false
+    },
+    "music/short/vs_0290_01": {
+      "bundleName": "music/short/vs_0290_01",
+      "cacheFileName": "c755767290aef7394f07fc0845e7383f",
+      "cacheDirectoryName": "c755",
+      "hash": "78e3ebaca66c0dbab630e79878364f23",
+      "category": "StartApp",
+      "crc": 2886810123,
+      "fileSize": 360851,
+      "dependencies": [],
+      "paths": [
+        "StartApp/music/short/vs_0290_01"
+      ],
+      "isBuiltin": false,
+      "isRelocate": false
+    }
+  }
+}

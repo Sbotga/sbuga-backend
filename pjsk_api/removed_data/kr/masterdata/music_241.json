@@ -1,0 +1,177 @@
+{
+  "musics": [
+    {
+      "id": 241,
+      "seq": 9000241,
+      "releaseConditionId": 1,
+      "categories": [
+        {
+          "musicCategoryName": "original"
+        }
+      ],
+      "title": "アサガオの散る頃に",
+      "pronunciation": "あさがおのちるころに",
+      "creatorArtistId": 129,
+      "lyricist": "ぷす(fromツユ)",
+      "composer": "ぷす(fromツユ)",
+      "arranger": "ぷす(fromツユ)",
+      "dancerCount": 1,
+      "selfDancerPosition": 0,
+      "assetbundleName": "jacket_s_241",
+      "publishedAt": 1653285600000,
+      "releasedAt": 1426345200000,
+      "fillerSec": 9.0,
+      "infos": [
+        {
+          "title": "나팔꽃 질 무렵에",
+          "creator": "푸스(from 츠유)",
+          "lyricist": "푸스(from 츠유)",
+          "composer": "푸스(from 츠유)",
+          "arranger": "푸스(from 츠유)"
+        }
+      ],
+      "isNewlyWrittenMusic": false,
+      "isFullLength": false,
+      "is_removed": true
+    }
+  ],
+  "musicVocals": [
+    {
+      "id": 606,
+      "musicId": 241,
+      "musicVocalType": "virtual_singer",
+      "seq": 1,
+      "releaseConditionId": 5,
+      "caption": "버추얼 싱어 ver.",
+      "characters": [
+        {
+          "id": 1160,
+          "musicId": 241,
+          "musicVocalId": 606,
+          "characterType": "game_character",
+          "characterId": 21,
+          "seq": 2410
+        }
+      ],
+      "assetbundleName": "vs_0241_01",
+      "archiveDisplayType": "normal",
+      "archivePublishedAt": 1233284400000
+    },
+    {
+      "id": 607,
+      "musicId": 241,
+      "musicVocalType": "sekai",
+      "seq": 2,
+      "releaseConditionId": 5,
+      "caption": "세카이 ver.",
+      "characters": [
+        {
+          "id": 1161,
+          "musicId": 241,
+          "musicVocalId": 607,
+          "characterType": "game_character",
+          "characterId": 21,
+          "seq": 2411
+        },
+        {
+          "id": 1162,
+          "musicId": 241,
+          "musicVocalId": 607,
+          "characterType": "game_character",
+          "characterId": 1,
+          "seq": 2412
+        },
+        {
+          "id": 1163,
+          "musicId": 241,
+          "musicVocalId": 607,
+          "characterType": "game_character",
+          "characterId": 3,
+          "seq": 2413
+        }
+      ],
+      "assetbundleName": "se_0241_01",
+      "archiveDisplayType": "normal",
+      "archivePublishedAt": 1233284400000
+    },
+    {
+      "id": 608,
+      "musicId": 241,
+      "musicVocalType": "another_vocal",
+      "seq": 3,
+      "releaseConditionId": 5,
+      "caption": "어나더 보컬 ver.",
+      "characters": [
+        {
+          "id": 1164,
+          "musicId": 241,
+          "musicVocalId": 608,
+          "characterType": "game_character",
+          "characterId": 3,
+          "seq": 2414
+        }
+      ],
+      "assetbundleName": "an_0241_01",
+      "archiveDisplayType": "normal",
+      "archivePublishedAt": 1668736800000
+    }
+  ],
+  "musicDifficulties": [
+    {
+      "id": 1201,
+      "musicId": 241,
+      "musicDifficulty": "easy",
+      "playLevel": 6,
+      "totalNoteCount": 210
+    },
+    {
+      "id": 1202,
+      "musicId": 241,
+      "musicDifficulty": "normal",
+      "playLevel": 12,
+      "totalNoteCount": 273
+    },
+    {
+      "id": 1203,
+      "musicId": 241,
+      "musicDifficulty": "hard",
+      "playLevel": 16,
+      "totalNoteCount": 478
+    },
+    {
+      "id": 1204,
+      "musicId": 241,
+      "musicDifficulty": "expert",
+      "playLevel": 21,
+      "totalNoteCount": 748
+    },
+    {
+      "id": 1205,
+      "musicId": 241,
+      "musicDifficulty": "master",
+      "playLevel": 26,
+      "totalNoteCount": 832
+    }
+  ],
+  "musicTags": [
+    {
+      "musicId": 241,
+      "musicTag": "all"
+    },
+    {
+      "musicId": 241,
+      "musicTag": "vocaloid"
+    },
+    {
+      "musicId": 241,
+      "musicTag": "light_music_club"
+    }
+  ],
+  "musicArtists": [
+    {
+      "id": 129,
+      "name": "ぷす(fromツユ)",
+      "pronunciation": "ぷす　ふろむつゆ"
+    }
+  ]
+}

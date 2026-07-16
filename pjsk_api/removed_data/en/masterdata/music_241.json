@@ -1,0 +1,178 @@
+{
+  "musics": [
+    {
+      "id": 241,
+      "seq": 9000241,
+      "releaseConditionId": 1,
+      "categories": [
+        "original"
+      ],
+      "title": "When the Morning Glory Falls",
+      "pronunciation": "whenthemorninggloryfalls",
+      "creatorArtistId": 129,
+      "lyricist": "Pusu (from TUYU)",
+      "composer": "Pusu (from TUYU)",
+      "arranger": "Pusu (from TUYU)",
+      "dancerCount": 1,
+      "selfDancerPosition": 0,
+      "assetbundleName": "jacket_s_241",
+      "liveTalkBackgroundAssetbundleName": "bg_livetalk_default_002",
+      "publishedAt": 1653285600000,
+      "releasedAt": 1426345200000,
+      "liveStageId": 1,
+      "secForMusicScoreMaker": 150,
+      "fillerSec": 9.0,
+      "isNewlyWrittenMusic": false,
+      "isFullLength": false,
+      "isAvailableForMusicScoreMaker": true,
+      "is_removed": true
+    }
+  ],
+  "musicVocals": [
+    {
+      "id": 606,
+      "musicId": 241,
+      "musicVocalType": "virtual_singer",
+      "seq": 1,
+      "releaseConditionId": 5,
+      "caption": "バーチャル・シンガーver.",
+      "characters": [
+        {
+          "id": 1160,
+          "musicId": 241,
+          "musicVocalId": 606,
+          "characterType": "game_character",
+          "characterId": 21,
+          "seq": 2410
+        }
+      ],
+      "assetbundleName": "vs_0241_01",
+      "archivePublishedAt": 1233284400000
+    },
+    {
+      "id": 607,
+      "musicId": 241,
+      "musicVocalType": "sekai",
+      "seq": 2,
+      "releaseConditionId": 5,
+      "caption": "セカイver.",
+      "characters": [
+        {
+          "id": 1161,
+          "musicId": 241,
+          "musicVocalId": 607,
+          "characterType": "game_character",
+          "characterId": 21,
+          "seq": 2411
+        },
+        {
+          "id": 1162,
+          "musicId": 241,
+          "musicVocalId": 607,
+          "characterType": "game_character",
+          "characterId": 1,
+          "seq": 2412
+        },
+        {
+          "id": 1163,
+          "musicId": 241,
+          "musicVocalId": 607,
+          "characterType": "game_character",
+          "characterId": 3,
+          "seq": 2413
+        }
+      ],
+      "assetbundleName": "se_0241_01",
+      "archivePublishedAt": 1233284400000
+    },
+    {
+      "id": 608,
+      "musicId": 241,
+      "musicVocalType": "another_vocal",
+      "seq": 3,
+      "releaseConditionId": 5,
+      "caption": "アナザーボーカルver.",
+      "characters": [
+        {
+          "id": 1164,
+          "musicId": 241,
+          "musicVocalId": 608,
+          "characterType": "game_character",
+          "characterId": 3,
+          "seq": 2414
+        }
+      ],
+      "assetbundleName": "an_0241_01",
+      "archivePublishedAt": 1668736800000
+    }
+  ],
+  "musicDifficulties": [
+    {
+      "id": 1201,
+      "musicId": 241,
+      "musicDifficulty": "easy",
+      "playLevel": 6,
+      "releaseConditionId": 1,
+      "totalNoteCount": 210
+    },
+    {
+      "id": 1202,
+      "musicId": 241,
+      "musicDifficulty": "normal",
+      "playLevel": 12,
+      "releaseConditionId": 1,
+      "totalNoteCount": 273
+    },
+    {
+      "id": 1203,
+      "musicId": 241,
+      "musicDifficulty": "hard",
+      "playLevel": 16,
+      "releaseConditionId": 1,
+      "totalNoteCount": 478
+    },
+    {
+      "id": 1204,
+      "musicId": 241,
+      "musicDifficulty": "expert",
+      "playLevel": 21,
+      "releaseConditionId": 1,
+      "totalNoteCount": 748
+    },
+    {
+      "id": 1205,
+      "musicId": 241,
+      "musicDifficulty": "master",
+      "playLevel": 26,
+      "releaseConditionId": 40241,
+      "totalNoteCount": 832
+    }
+  ],
+  "musicTags": [
+    {
+      "id": 241001,
+      "musicId": 241,
+      "musicTag": "all",
+      "seq": 0
+    },
+    {
+      "id": 241002,
+      "musicId": 241,
+      "musicTag": "vocaloid",
+      "seq": 1
+    },
+    {
+      "id": 241003,
+      "musicId": 241,
+      "musicTag": "light_music_club",
+      "seq": 6
+    }
+  ],
+  "musicArtists": [
+    {
+      "id": 129,
+      "name": "Pusu (from TUYU)",
+      "pronunciation": "Pusu (from TUYU)"
+    }
+  ]
+}
