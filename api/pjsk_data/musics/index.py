@@ -159,6 +159,7 @@ def _build_music(
         "tags": music_tags,
         "published_at": music.get("publishedAt"),
         "released_at": music.get("releasedAt"),
+        "removed_at": music.get("removedAt"),
         "is_newly_written": music.get("isNewlyWrittenMusic"),
         "is_full_length": music.get("isFullLength"),
         "filler_sec": music.get("fillerSec"),
