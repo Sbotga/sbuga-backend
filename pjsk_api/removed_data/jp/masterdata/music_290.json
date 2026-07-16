@@ -25,7 +25,7 @@
       "isNewlyWrittenMusic": true,
       "isFullLength": false,
       "isAvailableForMusicScoreMaker": true,
-      "is_removed": true
+      "removedAt": 1720578600000
     }
   ],
   "musicVocals": [
