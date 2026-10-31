@@ -1,0 +1,17 @@
+# Copy to proxy.yml (gitignored) and fill in real proxies.
+# Used ONLY as a fallback for ROW (tw/kr/cn) ByteDance signup/auth requests when
+# the direct IP gets rate-limited ("存取過於頻繁"): the auth flow backs off
+# exponentially and retries through a rotating proxy from this pool. Set
+# `enabled: false` (or leave the file absent) to always go direct.
+enabled: false
+
+proxies:
+  - enabled: true
+    url: "1.2.3.4:5678"
+    username: "proxy-user"
+    password: "proxy-pass"
+
+  - enabled: true
+    url: "5.6.7.8:9012"
+    username: "proxy-user"
+    password: "proxy-pass"

@@ -5,6 +5,7 @@ pjsk_api/constants.py
 pjsk_api/app_ver_hash.py
 pjsk_api/nuverse_masterdata/
 config.yml
+proxy.yml
 
 # very very sensitive gorgon headers
 pjsk_api/gorgon.py
